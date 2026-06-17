@@ -1,0 +1,15 @@
+{
+  "name": "Пасічник — облік бджолородин",
+  "short_name": "Пасічник",
+  "description": "Облік бджолосімей з голосовим керуванням",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbf6e8",
+  "theme_color": "#d18d2a",
+  "lang": "uk",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
