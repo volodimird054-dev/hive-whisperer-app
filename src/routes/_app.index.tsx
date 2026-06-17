@@ -7,31 +7,31 @@ export const Route = createFileRoute("/_app/")({
 });
 
 const ITEMS = [
-  { to: "/apiary", title: "Моя пасіка", desc: "Профіль вашої пасіки", icon: HomeIcon, color: "from-amber-200 to-amber-100" },
-  { to: "/hives", title: "Мої вулики", desc: "Облік бджолосімей", icon: Boxes, color: "from-yellow-200 to-amber-100" },
-  { to: "/queens", title: "Виведення маток", desc: "Графік щеплень і виходу", icon: Crown, color: "from-orange-200 to-amber-100" },
-  { to: "/calendar", title: "Календар пасічника", desc: "Сезонні роботи", icon: CalendarDays, color: "from-lime-200 to-green-100" },
-  { to: "/marketplace", title: "Купи / Продай", desc: "Оголошення бджолярів", icon: ShoppingBag, color: "from-rose-200 to-amber-100" },
-  { to: "/chat", title: "Чат з бджолярами", desc: "Спільнота", icon: MessageCircle, color: "from-sky-200 to-amber-100" },
+  { to: "/apiary", title: "Моя пасіка", desc: "Профіль вашої пасіки", icon: HomeIcon, tone: "main-menu-card--apiary" },
+  { to: "/hives", title: "Мої вулики", desc: "Облік бджолосімей", icon: Boxes, tone: "main-menu-card--hives" },
+  { to: "/queens", title: "Виведення маток", desc: "Графік щеплень і виходу", icon: Crown, tone: "main-menu-card--queens" },
+  { to: "/calendar", title: "Календар пасічника", desc: "Сезонні роботи", icon: CalendarDays, tone: "main-menu-card--calendar" },
+  { to: "/marketplace", title: "Купи / Продай", desc: "Оголошення бджолярів", icon: ShoppingBag, tone: "main-menu-card--market" },
+  { to: "/chat", title: "Чат з бджолярами", desc: "Спільнота", icon: MessageCircle, tone: "main-menu-card--chat" },
 ] as const;
 
 function HomePage() {
   return (
-    <div>
+    <div className="overflow-hidden">
       <div className="mb-6 mt-2">
-        <h1 className="text-2xl font-bold">Вітаю, пасічнику! 🐝</h1>
+        <h1 className="text-xl font-bold sm:text-2xl">Вітаю, пасічнику! 🐝</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Натисніть мікрофон унизу — і керуйте додатком голосом.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {ITEMS.map(({ to, title, desc, icon: Icon, color }) => (
-          <Link key={to} to={to}>
-            <Card className={`p-4 h-full bg-gradient-to-br ${color} border-honey/30 hover:shadow-md transition-shadow active:scale-[0.98]`}>
-              <Icon className="w-7 h-7 mb-3 text-foreground/80" />
-              <div className="font-semibold text-foreground">{title}</div>
-              <div className="text-xs text-foreground/70 mt-1">{desc}</div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {ITEMS.map(({ to, title, desc, icon: Icon, tone }) => (
+          <Link key={to} to={to} className="block min-w-0">
+            <Card className={`main-menu-card ${tone}`}>
+              <Icon className="main-menu-card__icon" />
+              <div className="main-menu-card__title">{title}</div>
+              <div className="main-menu-card__desc">{desc}</div>
             </Card>
           </Link>
         ))}
