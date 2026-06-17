@@ -11,6 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppQueensRouteImport } from './routes/_app.queens'
+import { Route as AppMarketplaceRouteImport } from './routes/_app.marketplace'
+import { Route as AppHivesRouteImport } from './routes/_app.hives'
+import { Route as AppChatRouteImport } from './routes/_app.chat'
+import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
+import { Route as AppApiaryRouteImport } from './routes/_app.apiary'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -21,30 +28,110 @@ const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppQueensRoute = AppQueensRouteImport.update({
+  id: '/queens',
+  path: '/queens',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMarketplaceRoute = AppMarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHivesRoute = AppHivesRouteImport.update({
+  id: '/hives',
+  path: '/hives',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChatRoute = AppChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCalendarRoute = AppCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppApiaryRoute = AppApiaryRouteImport.update({
+  id: '/apiary',
+  path: '/apiary',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AppRoute
+  '/': typeof AppIndexRoute
   '/auth': typeof AuthRoute
+  '/apiary': typeof AppApiaryRoute
+  '/calendar': typeof AppCalendarRoute
+  '/chat': typeof AppChatRoute
+  '/hives': typeof AppHivesRoute
+  '/marketplace': typeof AppMarketplaceRoute
+  '/queens': typeof AppQueensRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof AppRoute
   '/auth': typeof AuthRoute
+  '/apiary': typeof AppApiaryRoute
+  '/calendar': typeof AppCalendarRoute
+  '/chat': typeof AppChatRoute
+  '/hives': typeof AppHivesRoute
+  '/marketplace': typeof AppMarketplaceRoute
+  '/queens': typeof AppQueensRoute
+  '/': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_app': typeof AppRoute
+  '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_app/apiary': typeof AppApiaryRoute
+  '/_app/calendar': typeof AppCalendarRoute
+  '/_app/chat': typeof AppChatRoute
+  '/_app/hives': typeof AppHivesRoute
+  '/_app/marketplace': typeof AppMarketplaceRoute
+  '/_app/queens': typeof AppQueensRoute
+  '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/apiary'
+    | '/calendar'
+    | '/chat'
+    | '/hives'
+    | '/marketplace'
+    | '/queens'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth'
-  id: '__root__' | '/_app' | '/auth'
+  to:
+    | '/auth'
+    | '/apiary'
+    | '/calendar'
+    | '/chat'
+    | '/hives'
+    | '/marketplace'
+    | '/queens'
+    | '/'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/auth'
+    | '/_app/apiary'
+    | '/_app/calendar'
+    | '/_app/chat'
+    | '/_app/hives'
+    | '/_app/marketplace'
+    | '/_app/queens'
+    | '/_app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AppRoute: typeof AppRoute
+  AppRoute: typeof AppRouteWithChildren
   AuthRoute: typeof AuthRoute
 }
 
@@ -64,23 +151,84 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/': {
+      id: '/_app/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/queens': {
+      id: '/_app/queens'
+      path: '/queens'
+      fullPath: '/queens'
+      preLoaderRoute: typeof AppQueensRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/marketplace': {
+      id: '/_app/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof AppMarketplaceRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/hives': {
+      id: '/_app/hives'
+      path: '/hives'
+      fullPath: '/hives'
+      preLoaderRoute: typeof AppHivesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/chat': {
+      id: '/_app/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AppChatRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/calendar': {
+      id: '/_app/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AppCalendarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/apiary': {
+      id: '/_app/apiary'
+      path: '/apiary'
+      fullPath: '/apiary'
+      preLoaderRoute: typeof AppApiaryRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppApiaryRoute: typeof AppApiaryRoute
+  AppCalendarRoute: typeof AppCalendarRoute
+  AppChatRoute: typeof AppChatRoute
+  AppHivesRoute: typeof AppHivesRoute
+  AppMarketplaceRoute: typeof AppMarketplaceRoute
+  AppQueensRoute: typeof AppQueensRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppApiaryRoute: AppApiaryRoute,
+  AppCalendarRoute: AppCalendarRoute,
+  AppChatRoute: AppChatRoute,
+  AppHivesRoute: AppHivesRoute,
+  AppMarketplaceRoute: AppMarketplaceRoute,
+  AppQueensRoute: AppQueensRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  AppRoute: AppRoute,
+  AppRoute: AppRouteWithChildren,
   AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
