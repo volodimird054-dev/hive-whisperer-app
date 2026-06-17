@@ -6,11 +6,6 @@ import { LogOut, Home } from "lucide-react";
 import { VoiceFab } from "@/components/voice-fab";
 
 export const Route = createFileRoute("/_app")({
-  ssr: false,
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) throw redirect({ to: "/auth" });
-  },
   component: AppLayout,
 });
 
