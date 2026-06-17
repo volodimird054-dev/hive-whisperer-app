@@ -50,12 +50,14 @@ export const interpretCommand = createServerFn({ method: "POST" })
 
     try {
       const parsed = JSON.parse(raw);
-      return parsed as {
-        action: string;
-        fields?: Record<string, unknown>;
-        speech?: string;
-      };
+      return { json: JSON.stringify(parsed) };
     } catch {
-      return { action: "unknown", fields: { reason: "Не вдалося розпізнати" }, speech: text };
+      return {
+        json: JSON.stringify({
+          action: "unknown",
+          fields: { reason: "Не вдалося розпізнати" },
+          speech: text,
+        }),
+      };
     }
   });
