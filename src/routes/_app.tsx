@@ -11,8 +11,13 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppLayout() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) navigate({ to: "/auth" });
+  }, [loading, user, navigate]);
 
   async function signOut() {
     await supabase.auth.signOut();
