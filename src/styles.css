@@ -131,10 +131,83 @@
 @layer base {
   * {
     border-color: var(--color-border);
+    box-sizing: border-box;
   }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .main-menu-card {
+    min-height: 8.25rem;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    border-color: hsl(42 78% 70%);
+    background: var(--menu-card-bg);
+    padding: 1rem;
+    transition:
+      transform 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .main-menu-card:active {
+    transform: scale(0.98);
+  }
+
+  @media (hover: hover) {
+    .main-menu-card:hover {
+      box-shadow: 0 12px 28px hsl(36 42% 14% / 0.12);
+    }
+  }
+
+  .main-menu-card__icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-bottom: 0.75rem;
+    color: hsl(36 42% 24%);
+  }
+
+  .main-menu-card__title {
+    color: hsl(36 42% 14%);
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .main-menu-card__desc {
+    margin-top: 0.35rem;
+    color: hsl(36 18% 38%);
+    font-size: 0.78rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .main-menu-card--apiary {
+    --menu-card-bg: var(--menu-apiary);
+  }
+
+  .main-menu-card--hives {
+    --menu-card-bg: var(--menu-hives);
+  }
+
+  .main-menu-card--queens {
+    --menu-card-bg: var(--menu-queens);
+  }
+
+  .main-menu-card--calendar {
+    --menu-card-bg: var(--menu-calendar);
+  }
+
+  .main-menu-card--market {
+    --menu-card-bg: var(--menu-market);
+  }
+
+  .main-menu-card--chat {
+    --menu-card-bg: var(--menu-chat);
   }
 }
