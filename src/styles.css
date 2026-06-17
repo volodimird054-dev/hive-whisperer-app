@@ -51,41 +51,48 @@
 /* Pasichnyk theme: warm honey + dark forest. */
 :root {
   --radius: 0.875rem;
-  --background: oklch(0.985 0.018 95);
-  --foreground: oklch(0.22 0.04 60);
-  --card: oklch(0.995 0.012 90);
-  --card-foreground: oklch(0.22 0.04 60);
-  --popover: oklch(0.995 0.012 90);
-  --popover-foreground: oklch(0.22 0.04 60);
-  --primary: oklch(0.55 0.16 55);
-  --primary-foreground: oklch(0.99 0.01 90);
-  --secondary: oklch(0.94 0.04 90);
-  --secondary-foreground: oklch(0.28 0.05 60);
-  --muted: oklch(0.95 0.025 90);
-  --muted-foreground: oklch(0.48 0.04 70);
-  --accent: oklch(0.88 0.12 95);
-  --accent-foreground: oklch(0.25 0.05 60);
-  --destructive: oklch(0.58 0.22 27);
-  --destructive-foreground: oklch(0.99 0.01 90);
-  --border: oklch(0.9 0.03 85);
-  --input: oklch(0.92 0.025 85);
-  --ring: oklch(0.65 0.15 60);
-  --honey: oklch(0.78 0.17 80);
-  --honey-foreground: oklch(0.22 0.04 60);
-  --comb: oklch(0.92 0.08 95);
-  --chart-1: oklch(0.7 0.17 70);
-  --chart-2: oklch(0.55 0.14 145);
-  --chart-3: oklch(0.6 0.16 40);
-  --chart-4: oklch(0.75 0.13 95);
-  --chart-5: oklch(0.45 0.1 65);
-  --sidebar: oklch(0.98 0.02 90);
-  --sidebar-foreground: oklch(0.22 0.04 60);
-  --sidebar-primary: oklch(0.55 0.16 55);
-  --sidebar-primary-foreground: oklch(0.99 0.01 90);
-  --sidebar-accent: oklch(0.94 0.04 90);
-  --sidebar-accent-foreground: oklch(0.28 0.05 60);
-  --sidebar-border: oklch(0.9 0.03 85);
-  --sidebar-ring: oklch(0.65 0.15 60);
+  --background: hsl(46 80% 96%);
+  --foreground: hsl(36 42% 14%);
+  --card: hsl(48 90% 97%);
+  --card-foreground: hsl(36 42% 14%);
+  --popover: hsl(48 90% 97%);
+  --popover-foreground: hsl(36 42% 14%);
+  --primary: hsl(39 92% 42%);
+  --primary-foreground: hsl(48 100% 98%);
+  --secondary: hsl(45 70% 90%);
+  --secondary-foreground: hsl(36 42% 18%);
+  --muted: hsl(44 52% 91%);
+  --muted-foreground: hsl(36 18% 42%);
+  --accent: hsl(43 92% 79%);
+  --accent-foreground: hsl(36 42% 16%);
+  --destructive: hsl(2 72% 45%);
+  --destructive-foreground: hsl(48 100% 98%);
+  --border: hsl(42 42% 82%);
+  --input: hsl(42 42% 84%);
+  --ring: hsl(39 92% 42%);
+  --honey: hsl(43 96% 50%);
+  --honey-foreground: hsl(36 42% 14%);
+  --comb: hsl(45 86% 88%);
+  --chart-1: hsl(39 92% 48%);
+  --chart-2: hsl(133 34% 38%);
+  --chart-3: hsl(21 70% 45%);
+  --chart-4: hsl(50 82% 66%);
+  --chart-5: hsl(32 38% 32%);
+  --sidebar: hsl(46 80% 96%);
+  --sidebar-foreground: hsl(36 42% 14%);
+  --sidebar-primary: hsl(39 92% 42%);
+  --sidebar-primary-foreground: hsl(48 100% 98%);
+  --sidebar-accent: hsl(45 70% 90%);
+  --sidebar-accent-foreground: hsl(36 42% 18%);
+  --sidebar-border: hsl(42 42% 82%);
+  --sidebar-ring: hsl(39 92% 42%);
+
+  --menu-apiary: hsl(48 100% 84%);
+  --menu-hives: hsl(51 100% 82%);
+  --menu-queens: hsl(35 100% 84%);
+  --menu-calendar: hsl(98 82% 84%);
+  --menu-market: hsl(12 88% 88%);
+  --menu-chat: hsl(176 42% 84%);
 }
 
 .dark {
@@ -124,10 +131,83 @@
 @layer base {
   * {
     border-color: var(--color-border);
+    box-sizing: border-box;
   }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .main-menu-card {
+    min-height: 8.25rem;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    border-color: hsl(42 78% 70%);
+    background: var(--menu-card-bg);
+    padding: 1rem;
+    transition:
+      transform 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .main-menu-card:active {
+    transform: scale(0.98);
+  }
+
+  @media (hover: hover) {
+    .main-menu-card:hover {
+      box-shadow: 0 12px 28px hsl(36 42% 14% / 0.12);
+    }
+  }
+
+  .main-menu-card__icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-bottom: 0.75rem;
+    color: hsl(36 42% 24%);
+  }
+
+  .main-menu-card__title {
+    color: hsl(36 42% 14%);
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .main-menu-card__desc {
+    margin-top: 0.35rem;
+    color: hsl(36 18% 38%);
+    font-size: 0.78rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .main-menu-card--apiary {
+    --menu-card-bg: var(--menu-apiary);
+  }
+
+  .main-menu-card--hives {
+    --menu-card-bg: var(--menu-hives);
+  }
+
+  .main-menu-card--queens {
+    --menu-card-bg: var(--menu-queens);
+  }
+
+  .main-menu-card--calendar {
+    --menu-card-bg: var(--menu-calendar);
+  }
+
+  .main-menu-card--market {
+    --menu-card-bg: var(--menu-market);
+  }
+
+  .main-menu-card--chat {
+    --menu-card-bg: var(--menu-chat);
   }
 }
