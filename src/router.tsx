@@ -10,8 +10,7 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
-    defaultSsr: false as unknown as undefined,
-  } as any);
+  });
 
   return router;
 };
