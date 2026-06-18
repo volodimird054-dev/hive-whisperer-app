@@ -146,7 +146,7 @@ export function VoiceFab() {
         if (f.notes != null) patch.notes = f.notes;
         if (f.new_number != null) patch.number = String(f.new_number);
         if (!Object.keys(patch).length) return toast.info("Нічого змінювати");
-        const { error } = await supabase.from("hives").update(patch).eq("id", hid);
+        const { error } = await supabase.from("hives").update(patch as any).eq("id", hid);
         if (error) return toast.error(error.message);
         toast.success(`Оновлено вулик ${f.hive_number}`);
         qc.invalidateQueries({ queryKey: ["hives"] });
