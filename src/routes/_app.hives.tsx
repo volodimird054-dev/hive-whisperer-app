@@ -8,9 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Loader2, Trash2, Pencil } from "lucide-react";
+import { HiveQrButton } from "@/components/hive-qr";
+import { HiveScannerButton } from "@/components/hive-scanner";
 
 export const Route = createFileRoute("/_app/hives")({
   component: HivesPage,
@@ -32,6 +34,16 @@ function HivesPage() {
   const [queenYear, setQueenYear] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [scannedId, setScannedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = new URLSearchParams(window.location.search).get("scan");
+    if (id) {
+      setScannedId(id);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   async function add() {
     setSaving(true);
@@ -55,10 +67,12 @@ function HivesPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Мої вулики</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Додати</Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <HiveScannerButton onScan={(id) => setScannedId(id)} />
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Додати</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Новий вулик</DialogTitle></DialogHeader>
             <div className="space-y-3">
@@ -71,7 +85,8 @@ function HivesPage() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {isLoading ? (
@@ -79,7 +94,7 @@ function HivesPage() {
       ) : hives && hives.length > 0 ? (
         <div className="space-y-2">
           {hives.map(h => (
-            <HiveCard key={h.id} hive={h} onChange={() => qc.invalidateQueries({ queryKey: ["hives"] })} />
+            <HiveCard key={h.id} hive={h} forceOpen={scannedId === h.id} onChange={() => qc.invalidateQueries({ queryKey: ["hives"] })} />
           ))}
         </div>
       ) : (
@@ -91,8 +106,9 @@ function HivesPage() {
   );
 }
 
-function HiveCard({ hive, onChange }: { hive: any; onChange: () => void }) {
+function HiveCard({ hive, onChange, forceOpen }: { hive: any; onChange: () => void; forceOpen?: boolean }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => { if (forceOpen) setOpen(true); }, [forceOpen]);
   const [edit, setEdit] = useState(false);
   const [number, setNumber] = useState(hive.number);
   const [breed, setBreed] = useState(hive.breed ?? "");
@@ -158,6 +174,7 @@ function HiveCard({ hive, onChange }: { hive: any; onChange: () => void }) {
           <Button variant="outline" onClick={() => setEdit(true)} className="w-full">
             <Pencil className="w-4 h-4 mr-2" /> Редагувати картку
           </Button>
+          <HiveQrButton hiveId={hive.id} number={hive.number} />
           <div>
             <h3 className="font-semibold mb-2">Останні огляди</h3>
             {!inspections?.length && <div className="text-sm text-muted-foreground">Поки немає. Скажіть голосом: «У вулику {hive.number} матка червить».</div>}
