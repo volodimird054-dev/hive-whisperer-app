@@ -137,6 +137,43 @@ export function VoiceFab() {
         qc.invalidateQueries({ queryKey: ["hives"] });
         return;
       }
+      case "update_hive": {
+        const hid = await findHive(f.hive_number);
+        if (!hid) return toast.error(`Вулик ${f.hive_number} не знайдено`);
+        const patch: Record<string, any> = {};
+        if (f.breed != null) patch.breed = f.breed;
+        if (f.queen_year != null) patch.queen_year = Number(f.queen_year);
+        if (f.notes != null) patch.notes = f.notes;
+        if (f.new_number != null) patch.number = String(f.new_number);
+        if (!Object.keys(patch).length) return toast.info("Нічого змінювати");
+        const { error } = await supabase.from("hives").update(patch).eq("id", hid);
+        if (error) return toast.error(error.message);
+        toast.success(`Оновлено вулик ${f.hive_number}`);
+        qc.invalidateQueries({ queryKey: ["hives"] });
+        return;
+      }
+      case "update_queen_batch": {
+        const { data: b } = await supabase.from("queen_batches")
+          .select("id").ilike("name", `%${String(f.name ?? "")}%`).maybeSingle();
+        if (!b) return toast.error(`Партію "${f.name}" не знайдено`);
+        const patch: Record<string, any> = {};
+        if (f.count != null) patch.count = Number(f.count);
+        if (f.name != null) patch.name = String(f.name);
+        const { error } = await supabase.from("queen_batches").update(patch).eq("id", b.id);
+        if (error) return toast.error(error.message);
+        toast.success("Партію оновлено");
+        qc.invalidateQueries({ queryKey: ["queens"] });
+        return;
+      }
+      case "delete_queen_batch": {
+        const { data: b } = await supabase.from("queen_batches")
+          .select("id").ilike("name", `%${String(f.name ?? "")}%`).maybeSingle();
+        if (!b) return toast.error(`Партію "${f.name}" не знайдено`);
+        await supabase.from("queen_batches").delete().eq("id", b.id);
+        toast.success("Партію видалено");
+        qc.invalidateQueries({ queryKey: ["queens"] });
+        return;
+      }
       case "add_inspection": {
         const hid = await findHive(f.hive_number);
         if (!hid) return toast.error(`Вулик ${f.hive_number} не знайдено`);
