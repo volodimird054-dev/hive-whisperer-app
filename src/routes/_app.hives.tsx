@@ -67,10 +67,12 @@ function HivesPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Мої вулики</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Додати</Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <HiveScannerButton onScan={(id) => setScannedId(id)} />
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Додати</Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Новий вулик</DialogTitle></DialogHeader>
             <div className="space-y-3">
