@@ -174,6 +174,7 @@ function HiveCard({ hive, onChange, forceOpen }: { hive: any; onChange: () => vo
           <Button variant="outline" onClick={() => setEdit(true)} className="w-full">
             <Pencil className="w-4 h-4 mr-2" /> Редагувати картку
           </Button>
+          <HiveQrButton hiveId={hive.id} number={hive.number} />
           <div>
             <h3 className="font-semibold mb-2">Останні огляди</h3>
             {!inspections?.length && <div className="text-sm text-muted-foreground">Поки немає. Скажіть голосом: «У вулику {hive.number} матка червить».</div>}
