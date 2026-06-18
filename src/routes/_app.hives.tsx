@@ -106,8 +106,9 @@ function HivesPage() {
   );
 }
 
-function HiveCard({ hive, onChange }: { hive: any; onChange: () => void }) {
+function HiveCard({ hive, onChange, forceOpen }: { hive: any; onChange: () => void; forceOpen?: boolean }) {
   const [open, setOpen] = useState(false);
+  useEffect(() => { if (forceOpen) setOpen(true); }, [forceOpen]);
   const [edit, setEdit] = useState(false);
   const [number, setNumber] = useState(hive.number);
   const [breed, setBreed] = useState(hive.breed ?? "");
