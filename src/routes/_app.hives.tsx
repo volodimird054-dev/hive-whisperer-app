@@ -8,9 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Loader2, Trash2, Pencil } from "lucide-react";
+import { HiveQrButton } from "@/components/hive-qr";
+import { HiveScannerButton } from "@/components/hive-scanner";
 
 export const Route = createFileRoute("/_app/hives")({
   component: HivesPage,
