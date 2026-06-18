@@ -34,6 +34,16 @@ function HivesPage() {
   const [queenYear, setQueenYear] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [scannedId, setScannedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = new URLSearchParams(window.location.search).get("scan");
+    if (id) {
+      setScannedId(id);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   async function add() {
     setSaving(true);
