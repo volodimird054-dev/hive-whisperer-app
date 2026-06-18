@@ -159,7 +159,7 @@ export function VoiceFab() {
         const patch: Record<string, any> = {};
         if (f.count != null) patch.count = Number(f.count);
         if (f.name != null) patch.name = String(f.name);
-        const { error } = await supabase.from("queen_batches").update(patch).eq("id", b.id);
+        const { error } = await supabase.from("queen_batches").update(patch as any).eq("id", b.id);
         if (error) return toast.error(error.message);
         toast.success("Партію оновлено");
         qc.invalidateQueries({ queryKey: ["queens"] });
