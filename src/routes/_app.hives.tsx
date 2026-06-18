@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Loader2, Trash2 } from "lucide-react";
+import { Plus, Loader2, Trash2, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/_app/hives")({
   component: HivesPage,
@@ -93,6 +93,13 @@ function HivesPage() {
 
 function HiveCard({ hive, onChange }: { hive: any; onChange: () => void }) {
   const [open, setOpen] = useState(false);
+  const [edit, setEdit] = useState(false);
+  const [number, setNumber] = useState(hive.number);
+  const [breed, setBreed] = useState(hive.breed ?? "");
+  const [queenYear, setQueenYear] = useState(hive.queen_year?.toString() ?? "");
+  const [notes, setNotes] = useState(hive.notes ?? "");
+  const [saving, setSaving] = useState(false);
+
   const { data: inspections } = useQuery({
     queryKey: ["inspections", hive.id],
     queryFn: async () => {
@@ -102,6 +109,21 @@ function HiveCard({ hive, onChange }: { hive: any; onChange: () => void }) {
     },
     enabled: open,
   });
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase.from("hives").update({
+      number,
+      breed: breed || null,
+      queen_year: queenYear ? Number(queenYear) : null,
+      notes: notes || null,
+    }).eq("id", hive.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Збережено");
+    setEdit(false);
+    onChange();
+  }
 
   async function del() {
     if (!confirm(`Видалити вулик ${hive.number}?`)) return;
@@ -133,6 +155,9 @@ function HiveCard({ hive, onChange }: { hive: any; onChange: () => void }) {
             <div><b>Матка:</b> {hive.queen_year || "—"}</div>
             {hive.notes && <div className="mt-2"><b>Нотатки:</b> {hive.notes}</div>}
           </div>
+          <Button variant="outline" onClick={() => setEdit(true)} className="w-full">
+            <Pencil className="w-4 h-4 mr-2" /> Редагувати картку
+          </Button>
           <div>
             <h3 className="font-semibold mb-2">Останні огляди</h3>
             {!inspections?.length && <div className="text-sm text-muted-foreground">Поки немає. Скажіть голосом: «У вулику {hive.number} матка червить».</div>}
@@ -149,6 +174,21 @@ function HiveCard({ hive, onChange }: { hive: any; onChange: () => void }) {
             <Trash2 className="w-4 h-4 mr-2" /> Видалити вулик
           </Button>
         </div>
+
+        <Dialog open={edit} onOpenChange={setEdit}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Редагувати вулик</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div><Label>Номер</Label><Input value={number} onChange={e => setNumber(e.target.value)} /></div>
+              <div><Label>Порода</Label><Input value={breed} onChange={e => setBreed(e.target.value)} placeholder="Карпатка, Бакфаст…" /></div>
+              <div><Label>Рік матки</Label><Input type="number" value={queenYear} onChange={e => setQueenYear(e.target.value)} /></div>
+              <div><Label>Нотатки</Label><Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} /></div>
+              <Button onClick={save} disabled={!number || saving} className="w-full">
+                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Зберегти
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </SheetContent>
     </Sheet>
   );

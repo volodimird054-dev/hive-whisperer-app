@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/queens")({
@@ -67,19 +67,77 @@ function QueensPage() {
       ) : (
         <div className="space-y-3">
           {batches.map(b => (
-            <Card key={b.id} className="p-4">
-              <div className="font-semibold">{b.name}</div>
-              <div className="text-xs text-muted-foreground mb-3">Щеплено: {b.grafted_on} · {b.count ?? "?"} шт.</div>
-              <ul className="text-sm space-y-1">
-                <li>🥚 Запечатування маточників: <b>{addDays(b.grafted_on, 5)}</b></li>
-                <li>👑 Вихід маток: <b>{addDays(b.grafted_on, 11)}</b></li>
-                <li>✈️ Обліт / спарювання: <b>{addDays(b.grafted_on, 16)}–{addDays(b.grafted_on, 24)}</b></li>
-                <li>🔍 Перевірка засіву: <b>{addDays(b.grafted_on, 28)}</b></li>
-              </ul>
-            </Card>
+            <BatchCard key={b.id} batch={b} onChange={() => qc.invalidateQueries({ queryKey: ["queens"] })} />
           ))}
         </div>
       )}
     </div>
+  );
+}
+
+function BatchCard({ batch, onChange }: { batch: any; onChange: () => void }) {
+  const [edit, setEdit] = useState(false);
+  const [name, setName] = useState(batch.name);
+  const [date, setDate] = useState(batch.grafted_on);
+  const [count, setCount] = useState(batch.count?.toString() ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase.from("queen_batches").update({
+      name, grafted_on: date, count: count ? Number(count) : null,
+    }).eq("id", batch.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Збережено");
+    setEdit(false);
+    onChange();
+  }
+
+  async function del() {
+    if (!confirm(`Видалити партію "${batch.name}"?`)) return;
+    const { error } = await supabase.from("queen_batches").delete().eq("id", batch.id);
+    if (error) return toast.error(error.message);
+    toast.success("Видалено");
+    onChange();
+  }
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="font-semibold">{batch.name}</div>
+        <div className="flex gap-1">
+          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEdit(true)}>
+            <Pencil className="w-4 h-4" />
+          </Button>
+          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={del}>
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+      <div className="text-xs text-muted-foreground mb-3">Щеплено: {batch.grafted_on} · {batch.count ?? "?"} шт.</div>
+      <ul className="text-sm space-y-1">
+        <li>🥚 Запечатування маточників: <b>{addDays(batch.grafted_on, 5)}</b></li>
+        <li>👑 Вихід маток: <b>{addDays(batch.grafted_on, 11)}</b></li>
+        <li>✈️ Обліт / спарювання: <b>{addDays(batch.grafted_on, 16)}–{addDays(batch.grafted_on, 24)}</b></li>
+        <li>🔍 Перевірка засіву: <b>{addDays(batch.grafted_on, 28)}</b></li>
+      </ul>
+
+      <Dialog open={edit} onOpenChange={setEdit}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Редагувати партію</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div><Label>Назва</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
+            <div><Label>Дата щеплення</Label><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
+            <div>
+              <Label>Кількість (живих)</Label>
+              <Input type="number" value={count} onChange={e => setCount(e.target.value)} />
+              <div className="text-xs text-muted-foreground mt-1">Оновіть, якщо частина маточників не вийшла.</div>
+            </div>
+            <Button onClick={save} disabled={!name || saving} className="w-full">Зберегти</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }
