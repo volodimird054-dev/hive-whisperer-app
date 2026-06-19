@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Loader2, X } from "lucide-react";
+import { Mic, Loader2, X, ScanLine, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -8,8 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useQueryClient } from "@tanstack/react-query";
-
-type SR = typeof window extends { SpeechRecognition: infer T } ? T : any;
+import { HiveScannerDialog } from "@/components/hive-scanner";
 
 function getRecognition(): any {
   if (typeof window === "undefined") return null;
@@ -19,13 +18,14 @@ function getRecognition(): any {
   const r = new Ctor();
   r.lang = "uk-UA";
   r.interimResults = true;
-  r.continuous = false;
+  r.continuous = true;
   return r;
 }
 
 const SCREENS: Record<string, string> = {
   home: "/",
   apiary: "/apiary",
+  points: "/points",
   hives: "/hives",
   queens: "/queens",
   calendar: "/calendar",
@@ -35,18 +35,21 @@ const SCREENS: Record<string, string> = {
 
 export function VoiceFab() {
   const [open, setOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [working, setWorking] = useState(false);
   const [reply, setReply] = useState<string | null>(null);
   const recRef = useRef<any>(null);
+  const userStoppedRef = useRef(false);
   const navigate = useNavigate();
   const interpret = useServerFn(interpretCommand);
   const qc = useQueryClient();
 
   useEffect(() => {
     if (!open) {
-      recRef.current?.stop?.();
+      userStoppedRef.current = true;
+      try { recRef.current?.stop?.(); } catch {}
       setTranscript("");
       setListening(false);
       setReply(null);
@@ -56,10 +59,11 @@ export function VoiceFab() {
   function start() {
     const r = getRecognition();
     if (!r) {
-      toast.error("Ваш браузер не підтримує розпізнавання мови. Спробуйте Chrome на Android.");
+      toast.error("Браузер не підтримує розпізнавання мови. Спробуйте Chrome на Android.");
       return;
     }
     recRef.current = r;
+    userStoppedRef.current = false;
     setTranscript("");
     setReply(null);
     setListening(true);
@@ -69,20 +73,29 @@ export function VoiceFab() {
       setTranscript(txt);
     };
     r.onerror = (e: any) => {
+      if (e.error === "no-speech" || e.error === "aborted") return;
       setListening(false);
       toast.error("Помилка мікрофона: " + e.error);
     };
-    r.onend = () => setListening(false);
-    r.start();
+    r.onend = () => {
+      // авто-перезапуск, якщо користувач не натиснув «Стоп»
+      if (!userStoppedRef.current) {
+        try { r.start(); return; } catch {}
+      }
+      setListening(false);
+    };
+    try { r.start(); } catch {}
   }
 
   function stop() {
-    recRef.current?.stop?.();
+    userStoppedRef.current = true;
+    try { recRef.current?.stop?.(); } catch {}
     setListening(false);
   }
 
   async function send() {
     if (!transcript.trim()) return;
+    stop();
     setWorking(true);
     try {
       const res = await interpret({ data: { transcript } });
@@ -105,18 +118,11 @@ export function VoiceFab() {
     const f = cmd.fields ?? {};
     const { data: u } = await supabase.auth.getUser();
     const user_id = u.user?.id;
-    if (!user_id && cmd.action !== "navigate") {
-      toast.error("Потрібен вхід");
-      return;
-    }
+    if (!user_id && cmd.action !== "navigate") { toast.error("Потрібен вхід"); return; }
 
     async function findHive(num: string | undefined) {
       if (!num) return null;
-      const { data } = await supabase
-        .from("hives")
-        .select("id")
-        .eq("number", String(num))
-        .maybeSingle();
+      const { data } = await supabase.from("hives").select("id").eq("number", String(num)).maybeSingle();
       return data?.id ?? null;
     }
 
@@ -132,7 +138,7 @@ export function VoiceFab() {
           number: String(f.number ?? "?"),
           breed: f.breed ?? null,
           notes: f.notes ?? null,
-        });
+        } as any);
         toast.success(`Додано вулик ${f.number}`);
         qc.invalidateQueries({ queryKey: ["hives"] });
         return;
@@ -152,132 +158,86 @@ export function VoiceFab() {
         qc.invalidateQueries({ queryKey: ["hives"] });
         return;
       }
-      case "update_queen_batch": {
-        const { data: b } = await supabase.from("queen_batches")
-          .select("id").ilike("name", `%${String(f.name ?? "")}%`).maybeSingle();
-        if (!b) return toast.error(`Партію "${f.name}" не знайдено`);
-        const patch: Record<string, any> = {};
-        if (f.count != null) patch.count = Number(f.count);
-        if (f.name != null) patch.name = String(f.name);
-        const { error } = await supabase.from("queen_batches").update(patch as any).eq("id", b.id);
-        if (error) return toast.error(error.message);
-        toast.success("Партію оновлено");
-        qc.invalidateQueries({ queryKey: ["queens"] });
-        return;
-      }
-      case "delete_queen_batch": {
-        const { data: b } = await supabase.from("queen_batches")
-          .select("id").ilike("name", `%${String(f.name ?? "")}%`).maybeSingle();
-        if (!b) return toast.error(`Партію "${f.name}" не знайдено`);
-        await supabase.from("queen_batches").delete().eq("id", b.id);
-        toast.success("Партію видалено");
-        qc.invalidateQueries({ queryKey: ["queens"] });
-        return;
-      }
       case "add_inspection": {
         const hid = await findHive(f.hive_number);
         if (!hid) return toast.error(`Вулик ${f.hive_number} не знайдено`);
         await supabase.from("inspections").insert({
-          user_id: user_id!,
-          hive_id: hid,
-          notes: f.notes ?? null,
-          queen_seen: f.queen_seen ?? null,
-        });
-        toast.success(`Огляд вулика ${f.hive_number} записано`);
-        return;
-      }
-      case "add_feeding": {
-        const hid = await findHive(f.hive_number);
-        if (!hid) return toast.error(`Вулик ${f.hive_number} не знайдено`);
-        await supabase.from("feedings").insert({
-          user_id: user_id!,
-          hive_id: hid,
-          feed_type: f.feed_type ?? null,
-          amount: f.amount ?? null,
-        });
-        toast.success("Годування записано");
-        return;
-      }
-      case "add_treatment": {
-        const hid = await findHive(f.hive_number);
-        if (!hid) return toast.error(`Вулик ${f.hive_number} не знайдено`);
-        await supabase.from("treatments").insert({
-          user_id: user_id!,
-          hive_id: hid,
-          product: f.product ?? null,
-          dose: f.dose ?? null,
-        });
-        toast.success("Обробку записано");
-        return;
-      }
-      case "add_harvest": {
-        const hid = await findHive(f.hive_number);
-        await supabase.from("harvests").insert({
-          user_id: user_id!,
-          hive_id: hid,
-          honey_kg: f.honey_kg ?? null,
-          honey_type: f.honey_type ?? null,
-        });
-        toast.success("Збір меду записано");
-        return;
-      }
-      case "add_event": {
-        await supabase.from("calendar_events").insert({
-          user_id: user_id!,
-          title: String(f.title ?? "Подія"),
-          event_date: f.event_date ?? new Date().toISOString().slice(0, 10),
-          description: f.description ?? null,
-        });
-        toast.success("Подію додано в календар");
+          user_id: user_id!, hive_id: hid, notes: f.notes ?? null,
+        } as any);
+        toast.success("Огляд збережено");
+        qc.invalidateQueries({ queryKey: ["inspections", hid] });
         return;
       }
       default:
-        toast.info("Команду не розпізнано");
+        toast.info("Команду розпізнано як: " + cmd.action);
     }
   }
 
   return (
     <>
-      <button
-        onClick={() => { setOpen(true); setTimeout(start, 100); }}
-        className="fixed bottom-6 right-1/2 translate-x-1/2 z-40 w-16 h-16 rounded-full bg-honey text-honey-foreground shadow-xl shadow-honey/40 flex items-center justify-center active:scale-95 transition-all border-4 border-background"
-        aria-label="Голосове керування"
-      >
-        <Mic className="w-7 h-7" />
-      </button>
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
+        <Button
+          size="icon"
+          variant="outline"
+          className="rounded-full h-14 w-14 shadow-lg bg-card"
+          onClick={() => setScanOpen(true)}
+          aria-label="Сканувати QR"
+        >
+          <ScanLine className="w-6 h-6" />
+        </Button>
+        <Button
+          size="icon"
+          className="rounded-full h-16 w-16 shadow-lg"
+          onClick={() => { setOpen(true); setTimeout(start, 100); }}
+          aria-label="Голосова команда"
+        >
+          <Mic className="w-7 h-7" />
+        </Button>
+      </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+      <HiveScannerDialog
+        open={scanOpen}
+        onOpenChange={setScanOpen}
+        onScan={(id) => { window.location.href = `/hives?scan=${id}`; }}
+      />
+
+      <Dialog open={open} onOpenChange={(v) => { if (!listening) setOpen(v); else if (!v) { stop(); setOpen(false); } }}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Mic className="w-5 h-5" /> Голосова команда
+              {listening ? <><span className="inline-block w-3 h-3 rounded-full bg-red-500 animate-pulse" /> Слухаю…</> : "Голосова команда"}
             </DialogTitle>
             <DialogDescription>
-              Скажіть, наприклад: «Відкрий мої вулики», «У вулику 5 матка червить, додав рамку»
+              Говоріть українською. Запис не зупиниться сам — натисніть «Зупинити».
             </DialogDescription>
           </DialogHeader>
 
-          <div className="min-h-24 rounded-md border bg-muted/50 p-3 text-sm">
-            {transcript || <span className="text-muted-foreground">{listening ? "Слухаю…" : "Натисніть мікрофон і говоріть"}</span>}
+          <div className="min-h-[120px] rounded-lg border bg-muted/40 p-4">
+            <div className={`whitespace-pre-wrap break-words ${listening ? "text-2xl leading-snug font-medium" : "text-base"}`}>
+              {transcript || <span className="text-muted-foreground text-base">Очікую вашу команду…</span>}
+            </div>
           </div>
 
-          {reply && (
-            <div className="rounded-md bg-honey/20 border border-honey/40 p-3 text-sm">
-              ✅ {reply}
-            </div>
-          )}
+          {reply && <div className="text-sm text-foreground/80 italic">🤖 {reply}</div>}
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2">
             {listening ? (
-              <Button variant="outline" onClick={stop}><X className="w-4 h-4 mr-1" /> Стоп</Button>
+              <Button variant="destructive" onClick={stop} className="flex-1 h-12 text-base">
+                <Square className="w-5 h-5 mr-2" /> Зупинити
+              </Button>
             ) : (
-              <Button variant="outline" onClick={start}><Mic className="w-4 h-4 mr-1" /> Записати</Button>
+              <Button variant="outline" onClick={start} className="flex-1 h-12 text-base">
+                <Mic className="w-5 h-5 mr-2" /> Записати знову
+              </Button>
             )}
-            <Button onClick={send} disabled={!transcript || working || listening}>
-              {working && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-              Виконати
+            <Button onClick={send} disabled={!transcript.trim() || working} className="flex-1 h-12 text-base">
+              {working ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
+              Відправити
             </Button>
           </div>
+          <Button variant="ghost" onClick={() => setOpen(false)} className="w-full">
+            <X className="w-4 h-4 mr-2" /> Закрити
+          </Button>
         </DialogContent>
       </Dialog>
     </>

@@ -1,62 +1,95 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScanLine } from "lucide-react";
+import { toast } from "sonner";
 
-export function HiveScannerButton({ onScan }: { onScan: (hiveId: string) => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<Html5Qrcode | null>(null);
-  const elementId = "hive-qr-reader";
+const ELEMENT_ID = "hive-qr-reader";
+
+export function HiveScannerDialog({
+  open,
+  onOpenChange,
+  onScan,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onScan: (hiveId: string) => void;
+}) {
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const cancelledRef = useRef(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    let cancelled = false;
-    const scanner = new Html5Qrcode(elementId, { verbose: false });
-    ref.current = scanner;
+    cancelledRef.current = false;
+    setError(null);
+    let attempt = 0;
 
-    scanner
-      .start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 240, height: 240 } },
-        (decoded) => {
-          if (cancelled) return;
-          let hiveId = decoded;
-          try {
-            const u = new URL(decoded);
-            const id = u.searchParams.get("scan");
-            if (id) hiveId = id;
-          } catch {}
-          cancelled = true;
-          scanner.stop().then(() => scanner.clear()).catch(() => {});
-          setOpen(false);
-          onScan(hiveId);
-        },
-        () => {},
-      )
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-      if (ref.current) {
-        ref.current.stop().then(() => ref.current?.clear()).catch(() => {});
-        ref.current = null;
+    const tryStart = async () => {
+      // wait for DOM element to mount (Radix mounts content async)
+      while (!document.getElementById(ELEMENT_ID) && attempt < 30) {
+        await new Promise((r) => setTimeout(r, 50));
+        attempt++;
+      }
+      if (!document.getElementById(ELEMENT_ID)) {
+        setError("Не вдалося ініціалізувати камеру");
+        return;
+      }
+      try {
+        const scanner = new Html5Qrcode(ELEMENT_ID, { verbose: false });
+        scannerRef.current = scanner;
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 240, height: 240 } },
+          (decoded) => {
+            if (cancelledRef.current) return;
+            cancelledRef.current = true;
+            let hiveId = decoded;
+            try {
+              const u = new URL(decoded);
+              const id = u.searchParams.get("scan");
+              if (id) hiveId = id;
+              else {
+                const m = u.pathname.match(/\/h\/([0-9a-f-]+)/i);
+                if (m) hiveId = m[1];
+              }
+            } catch {}
+            scanner.stop().then(() => scanner.clear()).catch(() => {});
+            onOpenChange(false);
+            onScan(hiveId);
+          },
+          () => {},
+        );
+      } catch (e: any) {
+        setError(e?.message ?? "Камера недоступна. Дозвольте доступ у браузері.");
+        toast.error("Камера недоступна");
       }
     };
-  }, [open, onScan]);
+
+    tryStart();
+
+    return () => {
+      cancelledRef.current = true;
+      const s = scannerRef.current;
+      scannerRef.current = null;
+      if (s) {
+        s.stop().then(() => s.clear()).catch(() => {});
+      }
+    };
+  }, [open, onOpenChange, onScan]);
 
   return (
-    <>
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        <ScanLine className="w-4 h-4 mr-1" /> Сканувати
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Сканувати QR вулика</DialogTitle></DialogHeader>
-          <div id={elementId} className="w-full rounded overflow-hidden" />
-          <p className="text-xs text-muted-foreground text-center">Наведіть камеру на QR-код вулика.</p>
-        </DialogContent>
-      </Dialog>
-    </>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Сканувати QR вулика</DialogTitle></DialogHeader>
+        <div id={ELEMENT_ID} className="w-full rounded overflow-hidden bg-black/5 min-h-[280px]" />
+        {error ? (
+          <p className="text-sm text-destructive text-center">{error}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground text-center">
+            Наведіть камеру на QR-код вулика.
+          </p>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Loader2, Trash2, Pencil } from "lucide-react";
 import { HiveQrButton } from "@/components/hive-qr";
-import { HiveScannerButton } from "@/components/hive-scanner";
+// scanner moved to global FAB
 
 export const Route = createFileRoute("/_app/hives")({
   component: HivesPage,
@@ -66,9 +66,8 @@ function HivesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Мої вулики</h1>
+        <h1 className="text-2xl font-bold">Всі вулики</h1>
         <div className="flex items-center gap-2">
-          <HiveScannerButton onScan={(id) => setScannedId(id)} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Додати</Button>
@@ -120,8 +119,17 @@ function HiveCard({ hive, onChange, forceOpen }: { hive: any; onChange: () => vo
     queryKey: ["inspections", hive.id],
     queryFn: async () => {
       const { data } = await supabase
-        .from("inspections").select("*").eq("hive_id", hive.id).order("inspected_at", { ascending: false }).limit(20);
-      return data ?? [];
+        .from("inspections").select("*").eq("hive_id", hive.id)
+        .order("inspected_at", { ascending: false }).limit(20);
+      const list = data ?? [];
+      const ids = Array.from(new Set(list.map((i: any) => i.user_id).filter(Boolean)));
+      let authors: Record<string, { display_name: string | null; email: string | null }> = {};
+      if (ids.length) {
+        const { data: prof } = await supabase
+          .from("profiles").select("id, display_name, email").in("id", ids as any);
+        (prof ?? []).forEach((p: any) => { authors[p.id] = { display_name: p.display_name, email: p.email }; });
+      }
+      return list.map((i: any) => ({ ...i, author: authors[i.user_id] }));
     },
     enabled: open,
   });
@@ -179,12 +187,17 @@ function HiveCard({ hive, onChange, forceOpen }: { hive: any; onChange: () => vo
             <h3 className="font-semibold mb-2">Останні огляди</h3>
             {!inspections?.length && <div className="text-sm text-muted-foreground">Поки немає. Скажіть голосом: «У вулику {hive.number} матка червить».</div>}
             <div className="space-y-2">
-              {inspections?.map(i => (
-                <Card key={i.id} className="p-3 text-sm">
-                  <div className="text-xs text-muted-foreground">{new Date(i.inspected_at).toLocaleString("uk-UA")}</div>
-                  <div>{i.notes || "—"}</div>
-                </Card>
-              ))}
+              {inspections?.map((i: any) => {
+                const who = i.author?.display_name || i.author?.email || "—";
+                return (
+                  <Card key={i.id} className="p-3 text-sm">
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(i.inspected_at).toLocaleString("uk-UA")} · {who}
+                    </div>
+                    <div>{i.notes || "—"}</div>
+                  </Card>
+                );
+              })}
             </div>
           </div>
           <Button variant="destructive" onClick={del} className="w-full">
