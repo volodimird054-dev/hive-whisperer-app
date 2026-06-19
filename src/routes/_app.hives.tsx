@@ -119,12 +119,17 @@ function HiveCard({ hive, onChange, forceOpen }: { hive: any; onChange: () => vo
     queryKey: ["inspections", hive.id],
     queryFn: async () => {
       const { data } = await supabase
-        .from("inspections")
-        .select("*, author:profiles!inspections_user_id_fkey(display_name, email)")
-        .eq("hive_id", hive.id)
-        .order("inspected_at", { ascending: false })
-        .limit(20);
-      return data ?? [];
+        .from("inspections").select("*").eq("hive_id", hive.id)
+        .order("inspected_at", { ascending: false }).limit(20);
+      const list = data ?? [];
+      const ids = Array.from(new Set(list.map((i: any) => i.user_id).filter(Boolean)));
+      let authors: Record<string, { display_name: string | null; email: string | null }> = {};
+      if (ids.length) {
+        const { data: prof } = await supabase
+          .from("profiles").select("id, display_name, email").in("id", ids as any);
+        (prof ?? []).forEach((p: any) => { authors[p.id] = { display_name: p.display_name, email: p.email }; });
+      }
+      return list.map((i: any) => ({ ...i, author: authors[i.user_id] }));
     },
     enabled: open,
   });
