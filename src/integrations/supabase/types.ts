@@ -47,6 +47,79 @@ export type Database = {
         }
         Relationships: []
       }
+      apiary_members: {
+        Row: {
+          apiary_id: string
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["apiary_role"]
+          user_id: string
+        }
+        Insert: {
+          apiary_id: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["apiary_role"]
+          user_id: string
+        }
+        Update: {
+          apiary_id?: string
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["apiary_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apiary_members_apiary_id_fkey"
+            columns: ["apiary_id"]
+            isOneToOne: false
+            referencedRelation: "apiaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apiary_points: {
+        Row: {
+          apiary_id: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["point_kind"]
+          location: string | null
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          apiary_id: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["point_kind"]
+          location?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          apiary_id?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["point_kind"]
+          location?: string | null
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apiary_points_apiary_id_fkey"
+            columns: ["apiary_id"]
+            isOneToOne: false
+            referencedRelation: "apiaries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           category: string | null
@@ -195,6 +268,7 @@ export type Database = {
           notes: string | null
           number: string
           photo_url: string | null
+          point_id: string | null
           queen_mark: string | null
           queen_year: number | null
           status: string | null
@@ -213,6 +287,7 @@ export type Database = {
           notes?: string | null
           number: string
           photo_url?: string | null
+          point_id?: string | null
           queen_mark?: string | null
           queen_year?: number | null
           status?: string | null
@@ -231,6 +306,7 @@ export type Database = {
           notes?: string | null
           number?: string
           photo_url?: string | null
+          point_id?: string | null
           queen_mark?: string | null
           queen_year?: number | null
           status?: string | null
@@ -244,6 +320,13 @@ export type Database = {
             columns: ["apiary_id"]
             isOneToOne: false
             referencedRelation: "apiaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hives_point_id_fkey"
+            columns: ["point_id"]
+            isOneToOne: false
+            referencedRelation: "apiary_points"
             referencedColumns: ["id"]
           },
         ]
@@ -345,6 +428,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string | null
+          email: string | null
           id: string
           updated_at: string
         }
@@ -352,6 +436,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id: string
           updated_at?: string
         }
@@ -359,6 +444,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          email?: string | null
           id?: string
           updated_at?: string
         }
@@ -446,10 +532,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      find_user_by_email: {
+        Args: { _email: string }
+        Returns: {
+          display_name: string
+          email: string
+          id: string
+        }[]
+      }
+      is_apiary_member: {
+        Args: { _apiary_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_apiary_owner: {
+        Args: { _apiary_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      apiary_role: "owner" | "member"
+      point_kind: "hives" | "nuclei"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -576,6 +678,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      apiary_role: ["owner", "member"],
+      point_kind: ["hives", "nuclei"],
+    },
   },
 } as const
