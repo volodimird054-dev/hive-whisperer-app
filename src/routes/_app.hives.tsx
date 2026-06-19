@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Loader2, Trash2, Pencil } from "lucide-react";
 import { HiveQrButton } from "@/components/hive-qr";
-import { HiveScannerButton } from "@/components/hive-scanner";
+// scanner moved to global FAB
 
 export const Route = createFileRoute("/_app/hives")({
   component: HivesPage,
@@ -66,9 +66,8 @@ function HivesPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Мої вулики</h1>
+        <h1 className="text-2xl font-bold">Всі вулики</h1>
         <div className="flex items-center gap-2">
-          <HiveScannerButton onScan={(id) => setScannedId(id)} />
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Додати</Button>
