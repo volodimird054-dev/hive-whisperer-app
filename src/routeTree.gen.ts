@@ -13,11 +13,13 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppQueensRouteImport } from './routes/_app.queens'
+import { Route as AppPointsRouteImport } from './routes/_app.points'
 import { Route as AppMarketplaceRouteImport } from './routes/_app.marketplace'
 import { Route as AppHivesRouteImport } from './routes/_app.hives'
 import { Route as AppChatRouteImport } from './routes/_app.chat'
 import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
 import { Route as AppApiaryRouteImport } from './routes/_app.apiary'
+import { Route as AppPointsPointIdRouteImport } from './routes/_app.points.$pointId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -36,6 +38,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppQueensRoute = AppQueensRouteImport.update({
   id: '/queens',
   path: '/queens',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPointsRoute = AppPointsRouteImport.update({
+  id: '/points',
+  path: '/points',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMarketplaceRoute = AppMarketplaceRouteImport.update({
@@ -63,6 +70,11 @@ const AppApiaryRoute = AppApiaryRouteImport.update({
   path: '/apiary',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPointsPointIdRoute = AppPointsPointIdRouteImport.update({
+  id: '/$pointId',
+  path: '/$pointId',
+  getParentRoute: () => AppPointsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -72,7 +84,9 @@ export interface FileRoutesByFullPath {
   '/chat': typeof AppChatRoute
   '/hives': typeof AppHivesRoute
   '/marketplace': typeof AppMarketplaceRoute
+  '/points': typeof AppPointsRouteWithChildren
   '/queens': typeof AppQueensRoute
+  '/points/$pointId': typeof AppPointsPointIdRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -81,8 +95,10 @@ export interface FileRoutesByTo {
   '/chat': typeof AppChatRoute
   '/hives': typeof AppHivesRoute
   '/marketplace': typeof AppMarketplaceRoute
+  '/points': typeof AppPointsRouteWithChildren
   '/queens': typeof AppQueensRoute
   '/': typeof AppIndexRoute
+  '/points/$pointId': typeof AppPointsPointIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -93,8 +109,10 @@ export interface FileRoutesById {
   '/_app/chat': typeof AppChatRoute
   '/_app/hives': typeof AppHivesRoute
   '/_app/marketplace': typeof AppMarketplaceRoute
+  '/_app/points': typeof AppPointsRouteWithChildren
   '/_app/queens': typeof AppQueensRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/points/$pointId': typeof AppPointsPointIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,7 +124,9 @@ export interface FileRouteTypes {
     | '/chat'
     | '/hives'
     | '/marketplace'
+    | '/points'
     | '/queens'
+    | '/points/$pointId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -115,8 +135,10 @@ export interface FileRouteTypes {
     | '/chat'
     | '/hives'
     | '/marketplace'
+    | '/points'
     | '/queens'
     | '/'
+    | '/points/$pointId'
   id:
     | '__root__'
     | '/_app'
@@ -126,8 +148,10 @@ export interface FileRouteTypes {
     | '/_app/chat'
     | '/_app/hives'
     | '/_app/marketplace'
+    | '/_app/points'
     | '/_app/queens'
     | '/_app/'
+    | '/_app/points/$pointId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -165,6 +189,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppQueensRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/points': {
+      id: '/_app/points'
+      path: '/points'
+      fullPath: '/points'
+      preLoaderRoute: typeof AppPointsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/marketplace': {
       id: '/_app/marketplace'
       path: '/marketplace'
@@ -200,8 +231,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppApiaryRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/points/$pointId': {
+      id: '/_app/points/$pointId'
+      path: '/$pointId'
+      fullPath: '/points/$pointId'
+      preLoaderRoute: typeof AppPointsPointIdRouteImport
+      parentRoute: typeof AppPointsRoute
+    }
   }
 }
+
+interface AppPointsRouteChildren {
+  AppPointsPointIdRoute: typeof AppPointsPointIdRoute
+}
+
+const AppPointsRouteChildren: AppPointsRouteChildren = {
+  AppPointsPointIdRoute: AppPointsPointIdRoute,
+}
+
+const AppPointsRouteWithChildren = AppPointsRoute._addFileChildren(
+  AppPointsRouteChildren,
+)
 
 interface AppRouteChildren {
   AppApiaryRoute: typeof AppApiaryRoute
@@ -209,6 +259,7 @@ interface AppRouteChildren {
   AppChatRoute: typeof AppChatRoute
   AppHivesRoute: typeof AppHivesRoute
   AppMarketplaceRoute: typeof AppMarketplaceRoute
+  AppPointsRoute: typeof AppPointsRouteWithChildren
   AppQueensRoute: typeof AppQueensRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -219,6 +270,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppChatRoute: AppChatRoute,
   AppHivesRoute: AppHivesRoute,
   AppMarketplaceRoute: AppMarketplaceRoute,
+  AppPointsRoute: AppPointsRouteWithChildren,
   AppQueensRoute: AppQueensRoute,
   AppIndexRoute: AppIndexRoute,
 }
