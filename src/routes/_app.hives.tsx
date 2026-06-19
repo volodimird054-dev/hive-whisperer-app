@@ -119,7 +119,11 @@ function HiveCard({ hive, onChange, forceOpen }: { hive: any; onChange: () => vo
     queryKey: ["inspections", hive.id],
     queryFn: async () => {
       const { data } = await supabase
-        .from("inspections").select("*").eq("hive_id", hive.id).order("inspected_at", { ascending: false }).limit(20);
+        .from("inspections")
+        .select("*, author:profiles!inspections_user_id_fkey(display_name, email)")
+        .eq("hive_id", hive.id)
+        .order("inspected_at", { ascending: false })
+        .limit(20);
       return data ?? [];
     },
     enabled: open,
@@ -178,12 +182,17 @@ function HiveCard({ hive, onChange, forceOpen }: { hive: any; onChange: () => vo
             <h3 className="font-semibold mb-2">Останні огляди</h3>
             {!inspections?.length && <div className="text-sm text-muted-foreground">Поки немає. Скажіть голосом: «У вулику {hive.number} матка червить».</div>}
             <div className="space-y-2">
-              {inspections?.map(i => (
-                <Card key={i.id} className="p-3 text-sm">
-                  <div className="text-xs text-muted-foreground">{new Date(i.inspected_at).toLocaleString("uk-UA")}</div>
-                  <div>{i.notes || "—"}</div>
-                </Card>
-              ))}
+              {inspections?.map((i: any) => {
+                const who = i.author?.display_name || i.author?.email || "—";
+                return (
+                  <Card key={i.id} className="p-3 text-sm">
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(i.inspected_at).toLocaleString("uk-UA")} · {who}
+                    </div>
+                    <div>{i.notes || "—"}</div>
+                  </Card>
+                );
+              })}
             </div>
           </div>
           <Button variant="destructive" onClick={del} className="w-full">
