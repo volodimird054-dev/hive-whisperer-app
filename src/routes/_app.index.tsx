@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_app/")({
 
 const ITEMS = [
   { to: "/apiary", title: "Моя пасіка", desc: "Профіль вашої пасіки", icon: HomeIcon, tone: "main-menu-card--apiary" },
-  { to: "/hives", title: "Мої вулики", desc: "Облік бджолосімей", icon: Boxes, tone: "main-menu-card--hives" },
+  { to: "/points", title: "Мої точки", desc: "Вулики та нуклеуси", icon: Boxes, tone: "main-menu-card--hives" },
   { to: "/queens", title: "Виведення маток", desc: "Графік щеплень і виходу", icon: Crown, tone: "main-menu-card--queens" },
   { to: "/calendar", title: "Календар пасічника", desc: "Сезонні роботи", icon: CalendarDays, tone: "main-menu-card--calendar" },
   { to: "/marketplace", title: "Купи / Продай", desc: "Оголошення бджолярів", icon: ShoppingBag, tone: "main-menu-card--market" },
