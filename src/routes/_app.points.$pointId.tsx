@@ -78,7 +78,6 @@ function PointPage() {
   if (isLoading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
   if (!point) return <div className="text-center text-muted-foreground mt-10">Точок не знайдено.</div>;
 
-  const isNuclei = point.kind === "nuclei";
   const title = isNuclei ? "Нуклеуси" : "Вулики";
 
   return (
