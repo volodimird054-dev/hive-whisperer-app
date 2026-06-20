@@ -90,7 +90,7 @@ function PointPage() {
         <div>
           <h1 className="text-2xl font-bold">{point.name}</h1>
           <p className="text-sm text-muted-foreground">
-            {isNuclei ? "Нуклеусний парк" : "Точка вуликів"}
+            {isNuclei ? "Нуклеусний парк" : "Точок вуликів"}
             {point.location ? ` · ${point.location}` : ""}
           </p>
         </div>
