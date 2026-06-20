@@ -45,11 +45,14 @@ function PointPage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const isNuclei = point?.kind === "nuclei";
+
   async function add() {
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
     const { error } = await (supabase.from("hives") as any).insert({
       user_id: u.user!.id,
+      apiary_id: point.apiary_id,
       point_id: pointId,
       number,
       breed: breed || null,
@@ -66,16 +69,15 @@ function PointPage() {
   }
 
   async function delPoint() {
-    if (!confirm("Видалити точку? Всі прикріплені вулики стануть «без точки».")) return;
+    if (!confirm("Видалити точок? Всі прикріплені вулики стануть «без точка».")) return;
     await (supabase.from as any)("apiary_points").delete().eq("id", pointId);
     qc.invalidateQueries({ queryKey: ["points"] });
     window.history.back();
   }
 
   if (isLoading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
-  if (!point) return <div className="text-center text-muted-foreground mt-10">Точку не знайдено.</div>;
+  if (!point) return <div className="text-center text-muted-foreground mt-10">Точок не знайдено.</div>;
 
-  const isNuclei = point.kind === "nuclei";
   const title = isNuclei ? "Нуклеуси" : "Вулики";
 
   return (
@@ -88,7 +90,7 @@ function PointPage() {
         <div>
           <h1 className="text-2xl font-bold">{point.name}</h1>
           <p className="text-sm text-muted-foreground">
-            {isNuclei ? "Нуклеусний парк" : "Точка вуликів"}
+            {isNuclei ? "Нуклеусний парк" : "Точок вуликів"}
             {point.location ? ` · ${point.location}` : ""}
           </p>
         </div>
