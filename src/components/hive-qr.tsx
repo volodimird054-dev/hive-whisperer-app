@@ -53,16 +53,20 @@ export function HiveQrButton({ hiveId, number }: { hiveId: string; number: strin
   function downloadPdf() {
     if (!canvasRef.current) return;
     const dataUrl = canvasRef.current.toDataURL("image/png");
-    // A4 портрет, мм
-    const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const size = 50; // 5×5 см
-    const x = (pageW - size) / 2;
-    const y = 20;
-    pdf.addImage(dataUrl, "PNG", x, y, size, size, undefined, "FAST");
+    // Наклейка трохи більше 5×5 см, щоб вмістився QR + текст знизу
+    const labelW = 55;
+    const labelH = 62;
+    const pdf = new jsPDF({ unit: "mm", format: [labelW, labelH], orientation: "portrait" });
+    const qrSize = 50; // 5×5 см
+    const x = (labelW - qrSize) / 2;
+    const y = 4;
+    pdf.addImage(dataUrl, "PNG", x, y, qrSize, qrSize, undefined, "FAST");
+    pdf.setDrawColor(180);
+    pdf.setLineWidth(0.3);
+    pdf.rect(1, 1, labelW - 2, labelH - 2); // тонка рамка для вирізування
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(16);
-    pdf.text(`Вулик №${number}`, pageW / 2, y + size + 8, { align: "center" });
+    pdf.setFontSize(14);
+    pdf.text(`Вулик №${number}`, labelW / 2, y + qrSize + 6, { align: "center" });
     pdf.save(`hive-${number}.pdf`);
   }
 

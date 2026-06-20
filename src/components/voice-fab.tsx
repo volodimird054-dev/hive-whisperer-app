@@ -175,23 +175,23 @@ export function VoiceFab() {
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-4">
         <Button
           size="icon"
           variant="outline"
-          className="rounded-full h-14 w-14 shadow-lg bg-card"
+          className="rounded-full h-16 w-16 shadow-lg bg-card"
           onClick={() => setScanOpen(true)}
           aria-label="Сканувати QR"
         >
-          <ScanLine className="w-6 h-6" />
+          <ScanLine className="w-8 h-8" />
         </Button>
         <Button
           size="icon"
-          className="rounded-full h-16 w-16 shadow-lg"
+          className="rounded-full h-20 w-20 shadow-lg"
           onClick={() => { setOpen(true); setTimeout(start, 100); }}
           aria-label="Голосова команда"
         >
-          <Mic className="w-7 h-7" />
+          <Mic className="w-10 h-10" />
         </Button>
       </div>
 
