@@ -7,12 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Loader2, Trash2, Pencil } from "lucide-react";
-import { HiveQrButton } from "@/components/hive-qr";
-// scanner moved to global FAB
+import { Plus, Loader2 } from "lucide-react";
+import { HiveCard } from "@/components/hive-card";
 
 export const Route = createFileRoute("/_app/hives")({
   component: HivesPage,
