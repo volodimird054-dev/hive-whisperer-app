@@ -16,7 +16,7 @@ async function renderHiveQr(canvas: HTMLCanvasElement, hiveId: string) {
   });
 }
 
-export function HiveQrButton({ hiveId, number }: { hiveId: string; number: string | number }) {
+export function HiveQrButton({ hiveId, number, label = "Вулик" }: { hiveId: string; number: string | number; label?: string }) {
   const [open, setOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [ready, setReady] = useState(false);
