@@ -77,7 +77,7 @@ export function HiveQrButton({ hiveId, number, label = "Вулик" }: { hiveId:
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>QR вулика №{number}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>QR {label.toLowerCase()} №{number}</DialogTitle></DialogHeader>
           <div className="flex flex-col items-center gap-3">
             <div
               className="bg-white rounded border flex items-center justify-center"
