@@ -16,7 +16,7 @@ async function renderHiveQr(canvas: HTMLCanvasElement, hiveId: string) {
   });
 }
 
-export function HiveQrButton({ hiveId, number }: { hiveId: string; number: string | number }) {
+export function HiveQrButton({ hiveId, number, label = "Вулик" }: { hiveId: string; number: string | number; label?: string }) {
   const [open, setOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [ready, setReady] = useState(false);
@@ -36,7 +36,7 @@ export function HiveQrButton({ hiveId, number }: { hiveId: string; number: strin
     const dataUrl = canvasRef.current.toDataURL("image/png");
     const w = window.open("", "_blank", "width=400,height=520");
     if (!w) return;
-    w.document.write(`<!doctype html><html><head><title>QR вулик №${number}</title>
+    w.document.write(`<!doctype html><html><head><title>QR ${label.toLowerCase()} №${number}</title>
 <style>
   @page { size: auto; margin: 8mm; }
   body { font-family: system-ui, sans-serif; text-align: center; margin: 0; padding: 6mm; }
@@ -44,7 +44,7 @@ export function HiveQrButton({ hiveId, number }: { hiveId: string; number: strin
   .lbl { font-size: 14pt; margin-top: 3mm; font-weight: 800; }
 </style></head><body>
   <img class="qr" src="${dataUrl}" />
-  <div class="lbl">Вулик №${number}</div>
+  <div class="lbl">${label} №${number}</div>
   <script>window.onload=()=>{setTimeout(()=>{window.print();},250);}</script>
 </body></html>`);
     w.document.close();
@@ -66,7 +66,7 @@ export function HiveQrButton({ hiveId, number }: { hiveId: string; number: strin
     pdf.rect(1, 1, labelW - 2, labelH - 2); // тонка рамка для вирізування
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(14);
-    pdf.text(`Вулик №${number}`, labelW / 2, y + qrSize + 6, { align: "center" });
+    pdf.text(`${label} №${number}`, labelW / 2, y + qrSize + 6, { align: "center" });
     pdf.save(`hive-${number}.pdf`);
   }
 
@@ -77,7 +77,7 @@ export function HiveQrButton({ hiveId, number }: { hiveId: string; number: strin
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>QR вулика №{number}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>QR {label.toLowerCase()} №{number}</DialogTitle></DialogHeader>
           <div className="flex flex-col items-center gap-3">
             <div
               className="bg-white rounded border flex items-center justify-center"
@@ -90,7 +90,7 @@ export function HiveQrButton({ hiveId, number }: { hiveId: string; number: strin
                 style={{ width: 244, height: 244, imageRendering: "pixelated", display: "block" }}
               />
             </div>
-            <div className="text-center font-bold text-lg">Вулик №{number}</div>
+            <div className="text-center font-bold text-lg">{label} №{number}</div>
             <p className="text-xs text-muted-foreground text-center">
               Великі модулі для впевненого сканування. Друк — 5×5 см.
             </p>

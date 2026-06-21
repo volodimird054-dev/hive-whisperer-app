@@ -1,0 +1,168 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Loader2, Trash2, Pencil } from "lucide-react";
+import { HiveQrButton } from "@/components/hive-qr";
+
+export function HiveCard({
+  hive,
+  onChange,
+  forceOpen,
+  kind = "hive",
+}: {
+  hive: any;
+  onChange: () => void;
+  forceOpen?: boolean;
+  kind?: "hive" | "nucleus";
+}) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (forceOpen) setOpen(true);
+  }, [forceOpen]);
+
+  const [edit, setEdit] = useState(false);
+  const [number, setNumber] = useState(hive.number);
+  const [breed, setBreed] = useState(hive.breed ?? "");
+  const [queenYear, setQueenYear] = useState(hive.queen_year?.toString() ?? "");
+  const [notes, setNotes] = useState(hive.notes ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const labelSingular = kind === "nucleus" ? "Нуклеус" : "Вулик";
+  const labelPlural = kind === "nucleus" ? "нуклеуси" : "вулики";
+
+  const { data: inspections } = useQuery({
+    queryKey: ["inspections", hive.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("inspections")
+        .select("*")
+        .eq("hive_id", hive.id)
+        .order("inspected_at", { ascending: false })
+        .limit(20);
+      const list = data ?? [];
+      const ids = Array.from(new Set(list.map((i: any) => i.user_id).filter(Boolean)));
+      let authors: Record<string, { display_name: string | null; email: string | null }> = {};
+      if (ids.length) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("id, display_name, email")
+          .in("id", ids as any);
+        (prof ?? []).forEach((p: any) => {
+          authors[p.id] = { display_name: p.display_name, email: p.email };
+        });
+      }
+      return list.map((i: any) => ({ ...i, author: authors[i.user_id] }));
+    },
+    enabled: open,
+  });
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase
+      .from("hives")
+      .update({
+        number,
+        breed: breed || null,
+        queen_year: queenYear ? Number(queenYear) : null,
+        notes: notes || null,
+      })
+      .eq("id", hive.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Збережено");
+    setEdit(false);
+    onChange();
+  }
+
+  async function del() {
+    if (!confirm(`Видалити ${labelSingular.toLowerCase()} ${hive.number}?`)) return;
+    await supabase.from("hives").delete().eq("id", hive.id);
+    onChange();
+    setOpen(false);
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Card className="p-4 flex items-center gap-3 cursor-pointer hover:bg-accent/40">
+          <div className="w-12 h-12 rounded-xl bg-honey/30 flex items-center justify-center font-bold text-lg">
+            {hive.number}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="font-medium">{labelSingular} №{hive.number}</div>
+            <div className="text-xs text-muted-foreground truncate">
+              {hive.breed || "—"}{hive.queen_year ? ` · матка ${hive.queen_year}` : ""}
+            </div>
+          </div>
+        </Card>
+      </SheetTrigger>
+      <SheetContent side="bottom" className="h-[80vh] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>{labelSingular} №{hive.number}</SheetTitle>
+        </SheetHeader>
+        <div className="space-y-4 mt-4">
+          <div className="text-sm">
+            <div><b>Порода:</b> {hive.breed || "—"}</div>
+            <div><b>Матка:</b> {hive.queen_year || "—"}</div>
+            {hive.notes && (
+              <div className="mt-2"><b>Нотатки:</b> {hive.notes}</div>
+            )}
+          </div>
+          <Button variant="outline" onClick={() => setEdit(true)} className="w-full">
+            <Pencil className="w-4 h-4 mr-2" /> Редагувати картку
+          </Button>
+          <HiveQrButton hiveId={hive.id} number={hive.number} label={labelSingular} />
+          <div>
+            <h3 className="font-semibold mb-2">Останні огляди</h3>
+            {!inspections?.length && (
+              <div className="text-sm text-muted-foreground">
+                Поки немає. Скажіть голосом: «У {labelSingular.toLowerCase()} {hive.number} матка червить».
+              </div>
+            )}
+            <div className="space-y-2">
+              {inspections?.map((i: any) => {
+                const who = i.author?.display_name || i.author?.email || "—";
+                return (
+                  <Card key={i.id} className="p-3 text-sm">
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(i.inspected_at).toLocaleString("uk-UA")} · {who}
+                    </div>
+                    <div>{i.notes || "—"}</div>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+          <Button variant="destructive" onClick={del} className="w-full">
+            <Trash2 className="w-4 h-4 mr-2" /> Видалити {labelSingular.toLowerCase()}
+          </Button>
+        </div>
+
+        <Dialog open={edit} onOpenChange={setEdit}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Редагувати {labelSingular.toLowerCase()}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div><Label>Номер</Label><Input value={number} onChange={e => setNumber(e.target.value)} /></div>
+              <div><Label>Порода</Label><Input value={breed} onChange={e => setBreed(e.target.value)} placeholder="Карпатка, Бакфаст…" /></div>
+              <div><Label>Рік матки</Label><Input type="number" value={queenYear} onChange={e => setQueenYear(e.target.value)} /></div>
+              <div><Label>Нотатки</Label><Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} /></div>
+              <Button onClick={save} disabled={!number || saving} className="w-full">
+                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Зберегти
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </SheetContent>
+    </Sheet>
+  );
+}

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useState } from "react";
 import { toast } from "sonner";
 import { Plus, Loader2, ArrowLeft, Trash2 } from "lucide-react";
+import { HiveCard } from "@/components/hive-card";
 
 export const Route = createFileRoute("/_app/points/$pointId")({
   component: PointPage,
@@ -119,15 +120,15 @@ function PointPage() {
       {hives && hives.length > 0 ? (
         <div className="space-y-2">
           {hives.map((h: any) => (
-            <Card key={h.id} className="p-4 flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-honey/30 flex items-center justify-center font-bold">{h.number}</div>
-              <div className="flex-1">
-                <div className="font-medium">{isNuclei ? "Нуклеус" : "Вулик"} №{h.number}</div>
-                <div className="text-xs text-muted-foreground">
-                  {h.breed || "—"}{h.queen_year ? ` · матка ${h.queen_year}` : ""}
-                </div>
-              </div>
-            </Card>
+            <HiveCard
+              key={h.id}
+              hive={h}
+              kind={isNuclei ? "nucleus" : "hive"}
+              onChange={() => {
+                qc.invalidateQueries({ queryKey: ["point-hives", pointId] });
+                qc.invalidateQueries({ queryKey: ["hives"] });
+              }}
+            />
           ))}
         </div>
       ) : (
