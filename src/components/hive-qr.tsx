@@ -36,7 +36,7 @@ export function HiveQrButton({ hiveId, number, label = "Вулик" }: { hiveId:
     const dataUrl = canvasRef.current.toDataURL("image/png");
     const w = window.open("", "_blank", "width=400,height=520");
     if (!w) return;
-    w.document.write(`<!doctype html><html><head><title>QR вулик №${number}</title>
+    w.document.write(`<!doctype html><html><head><title>QR ${label.toLowerCase()} №${number}</title>
 <style>
   @page { size: auto; margin: 8mm; }
   body { font-family: system-ui, sans-serif; text-align: center; margin: 0; padding: 6mm; }
