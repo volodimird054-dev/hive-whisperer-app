@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Mic, Loader2, X, ScanLine, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { interpretCommand } from "@/lib/voice.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +33,9 @@ const SCREENS: Record<string, string> = {
   chat: "/chat",
 };
 
+// Шляхи, на яких ГОЛОСОВЕ керування ПРИХОВАНЕ
+const VOICE_HIDDEN = ["/", "/apiary", "/marketplace", "/chat"];
+
 export function VoiceFab() {
   const [open, setOpen] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
@@ -45,6 +48,11 @@ export function VoiceFab() {
   const navigate = useNavigate();
   const interpret = useServerFn(interpretCommand);
   const qc = useQueryClient();
+
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const showVoice = !VOICE_HIDDEN.includes(pathname);
+  // Сканер показуємо лише на сторінці конкретного точка: /points/<id>
+  const showScan = /^\/points\/[^/]+$/.test(pathname);
 
   useEffect(() => {
     if (!open) {
@@ -78,7 +86,6 @@ export function VoiceFab() {
       toast.error("Помилка мікрофона: " + e.error);
     };
     r.onend = () => {
-      // авто-перезапуск, якщо користувач не натиснув «Стоп»
       if (!userStoppedRef.current) {
         try { r.start(); return; } catch {}
       }
@@ -173,27 +180,31 @@ export function VoiceFab() {
     }
   }
 
+  if (!showVoice && !showScan) return null;
+
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-4">
+      {showScan && (
         <Button
           size="icon"
-          variant="outline"
-          className="rounded-full h-16 w-16 shadow-lg bg-card"
+          variant="default"
+          className="fixed bottom-6 left-6 z-40 rounded-full h-16 w-16 shadow-lg"
           onClick={() => setScanOpen(true)}
           aria-label="Сканувати QR"
         >
-          <ScanLine className="w-8 h-8" />
+          <ScanLine className="!w-10 !h-10" />
         </Button>
+      )}
+      {showVoice && (
         <Button
           size="icon"
-          className="rounded-full h-20 w-20 shadow-lg"
+          className="fixed bottom-6 right-6 z-40 rounded-full h-16 w-16 shadow-lg"
           onClick={() => { setOpen(true); setTimeout(start, 100); }}
           aria-label="Голосова команда"
         >
-          <Mic className="w-10 h-10" />
+          <Mic className="!w-10 !h-10" />
         </Button>
-      </div>
+      )}
 
       <HiveScannerDialog
         open={scanOpen}
