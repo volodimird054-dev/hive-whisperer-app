@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useState } from "react";
 import { toast } from "sonner";
 import { Plus, Loader2, ArrowLeft, Trash2 } from "lucide-react";
+import { HiveCard } from "@/components/hive-card";
 
 export const Route = createFileRoute("/_app/points/$pointId")({
   component: PointPage,
