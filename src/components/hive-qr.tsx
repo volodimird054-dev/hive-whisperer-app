@@ -90,7 +90,7 @@ export function HiveQrButton({ hiveId, number, label = "Вулик" }: { hiveId:
                 style={{ width: 244, height: 244, imageRendering: "pixelated", display: "block" }}
               />
             </div>
-            <div className="text-center font-bold text-lg">Вулик №{number}</div>
+            <div className="text-center font-bold text-lg">{label} №{number}</div>
             <p className="text-xs text-muted-foreground text-center">
               Великі модулі для впевненого сканування. Друк — 5×5 см.
             </p>
