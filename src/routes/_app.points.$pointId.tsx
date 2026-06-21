@@ -119,17 +119,15 @@ function PointPage() {
       {hives && hives.length > 0 ? (
         <div className="space-y-2">
           {hives.map((h: any) => (
-            <Link key={h.id} to="/hives" search={{ scan: h.id } as any}>
-              <Card className="p-4 flex items-center gap-3 hover:bg-accent/40 cursor-pointer">
-                <div className="w-12 h-12 rounded-xl bg-honey/30 flex items-center justify-center font-bold">{h.number}</div>
-                <div className="flex-1">
-                  <div className="font-medium">{isNuclei ? "Нуклеус" : "Вулик"} №{h.number}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {h.breed || "—"}{h.queen_year ? ` · матка ${h.queen_year}` : ""}
-                  </div>
+            <Card key={h.id} className="p-4 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-honey/30 flex items-center justify-center font-bold">{h.number}</div>
+              <div className="flex-1">
+                <div className="font-medium">{isNuclei ? "Нуклеус" : "Вулик"} №{h.number}</div>
+                <div className="text-xs text-muted-foreground">
+                  {h.breed || "—"}{h.queen_year ? ` · матка ${h.queen_year}` : ""}
                 </div>
-              </Card>
-            </Link>
+              </div>
+            </Card>
           ))}
         </div>
       ) : (
