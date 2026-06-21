@@ -44,7 +44,7 @@ export function HiveQrButton({ hiveId, number, label = "Вулик" }: { hiveId:
   .lbl { font-size: 14pt; margin-top: 3mm; font-weight: 800; }
 </style></head><body>
   <img class="qr" src="${dataUrl}" />
-  <div class="lbl">Вулик №${number}</div>
+  <div class="lbl">${label} №${number}</div>
   <script>window.onload=()=>{setTimeout(()=>{window.print();},250);}</script>
 </body></html>`);
     w.document.close();
