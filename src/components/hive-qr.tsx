@@ -79,13 +79,15 @@ export function HiveQrButton({ hiveId, number }: { hiveId: string; number: strin
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>QR вулика №{number}</DialogTitle></DialogHeader>
           <div className="flex flex-col items-center gap-3">
-            <div className="w-full flex justify-center">
+            <div
+              className="bg-white rounded border flex items-center justify-center"
+              style={{ width: 260, height: 260, padding: 8 }}
+            >
               <canvas
                 ref={canvasRef}
                 width={720}
                 height={720}
-                className="w-full max-w-[260px] aspect-square bg-white rounded border"
-                style={{ imageRendering: "pixelated" }}
+                style={{ width: 244, height: 244, imageRendering: "pixelated", display: "block" }}
               />
             </div>
             <div className="text-center font-bold text-lg">Вулик №{number}</div>
