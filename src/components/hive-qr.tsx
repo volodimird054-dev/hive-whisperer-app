@@ -66,7 +66,7 @@ export function HiveQrButton({ hiveId, number, label = "Вулик" }: { hiveId:
     pdf.rect(1, 1, labelW - 2, labelH - 2); // тонка рамка для вирізування
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(14);
-    pdf.text(`Вулик №${number}`, labelW / 2, y + qrSize + 6, { align: "center" });
+    pdf.text(`${label} №${number}`, labelW / 2, y + qrSize + 6, { align: "center" });
     pdf.save(`hive-${number}.pdf`);
   }
 
