@@ -6,11 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Loader2, ArrowLeft, Trash2 } from "lucide-react";
+import { Plus, Loader2, ArrowLeft, Trash2, FileDown, MapPin } from "lucide-react";
 import { HiveCard } from "@/components/hive-card";
+import { generateHivesPdf } from "@/components/hive-qr";
 
 export const Route = createFileRoute("/_app/points/$pointId")({
   component: PointPage,
@@ -40,46 +43,101 @@ function PointPage() {
   });
 
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState("single");
   const [number, setNumber] = useState("");
+  const [rangeFrom, setRangeFrom] = useState("");
+  const [rangeTo, setRangeTo] = useState("");
   const [breed, setBreed] = useState("");
   const [queenYear, setQueenYear] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [printOpen, setPrintOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [pdfBusy, setPdfBusy] = useState(false);
+
   const isNuclei = point?.kind === "nuclei";
+  const label = isNuclei ? "Нуклеус" : "Вулик";
 
   async function add() {
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
-    const { error } = await (supabase.from("hives") as any).insert({
-      user_id: u.user!.id,
-      apiary_id: point.apiary_id,
-      point_id: pointId,
-      number,
-      breed: breed || null,
-      queen_year: queenYear ? Number(queenYear) : null,
-      notes: notes || null,
-    });
-    setSaving(false);
-    if (error) return toast.error(error.message);
-    setNumber(""); setBreed(""); setQueenYear(""); setNotes("");
+    const user_id = u.user!.id;
+
+    if (tab === "single") {
+      const { error } = await (supabase.from("hives") as any).insert({
+        user_id, apiary_id: point.apiary_id, point_id: pointId,
+        number, breed: breed || null,
+        queen_year: queenYear ? Number(queenYear) : null,
+        notes: notes || null,
+      });
+      setSaving(false);
+      if (error) return toast.error(error.message);
+      toast.success(`${label} додано`);
+    } else {
+      const from = parseInt(rangeFrom, 10);
+      const to = parseInt(rangeTo, 10);
+      if (!Number.isFinite(from) || !Number.isFinite(to) || to < from) {
+        setSaving(false);
+        return toast.error("Невірний діапазон");
+      }
+      if (to - from + 1 > 200) {
+        setSaving(false);
+        return toast.error("Максимум 200 за раз");
+      }
+      const rows = [];
+      for (let n = from; n <= to; n++) {
+        rows.push({
+          user_id, apiary_id: point.apiary_id, point_id: pointId,
+          number: String(n),
+          breed: breed || null,
+          queen_year: queenYear ? Number(queenYear) : null,
+        });
+      }
+      const { error } = await (supabase.from("hives") as any).insert(rows);
+      setSaving(false);
+      if (error) return toast.error(error.message);
+      toast.success(`Створено ${rows.length} ${label.toLowerCase()}ів`);
+    }
+    setNumber(""); setRangeFrom(""); setRangeTo("");
+    setBreed(""); setQueenYear(""); setNotes("");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["point-hives", pointId] });
     qc.invalidateQueries({ queryKey: ["points-counts"] });
-    toast.success(isNuclei ? "Нуклеус додано" : "Вулик додано");
   }
 
   async function delPoint() {
     if (!confirm("Видалити точок? Всі прикріплені вулики стануть «без точка».")) return;
-    await (supabase.from as any)("apiary_points").delete().eq("id", pointId);
+    const { error } = await (supabase.from as any)("apiary_points").delete().eq("id", pointId);
+    if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["points"] });
     window.history.back();
+  }
+
+  function toggleAll() {
+    if (!hives) return;
+    if (selectedIds.size === hives.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(hives.map((h: any) => h.id)));
+  }
+
+  async function doPdf() {
+    if (!hives) return;
+    const sel = hives.filter((h: any) => selectedIds.has(h.id));
+    if (!sel.length) return toast.error("Виберіть хоча б один");
+    setPdfBusy(true);
+    try {
+      await generateHivesPdf(sel.map((h: any) => ({ id: h.id, number: h.number })), label);
+      setPrintOpen(false);
+    } finally {
+      setPdfBusy(false);
+    }
   }
 
   if (isLoading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
   if (!point) return <div className="text-center text-muted-foreground mt-10">Точок не знайдено.</div>;
 
   const title = isNuclei ? "Нуклеуси" : "Вулики";
+  const loc = point.address || (point.lat && point.lng ? `${point.lat}, ${point.lng}` : point.location);
 
   return (
     <div>
@@ -87,33 +145,59 @@ function PointPage() {
         <ArrowLeft className="w-4 h-4 mr-1" /> До списку точок
       </Link>
 
-      <div className="flex items-center justify-between mb-2">
-        <div>
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold">{point.name}</h1>
           <p className="text-sm text-muted-foreground">
             {isNuclei ? "Нуклеусний парк" : "Точок вуликів"}
-            {point.location ? ` · ${point.location}` : ""}
           </p>
+          {loc && (
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+              <MapPin className="w-3 h-3" />{loc}
+            </p>
+          )}
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Додати</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Новий {isNuclei ? "нуклеус" : "вулик"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div><Label>Номер *</Label><Input value={number} onChange={e => setNumber(e.target.value)} /></div>
-              <div><Label>Порода</Label><Input value={breed} onChange={e => setBreed(e.target.value)} /></div>
-              <div><Label>Рік матки</Label><Input type="number" value={queenYear} onChange={e => setQueenYear(e.target.value)} /></div>
-              <div><Label>Нотатки</Label><Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} /></div>
-              <Button onClick={add} disabled={!number || saving} className="w-full">
-                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Зберегти
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <div className="flex flex-col gap-2">
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Додати</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Новий {label.toLowerCase()}</DialogTitle>
+              </DialogHeader>
+              <Tabs value={tab} onValueChange={setTab}>
+                <TabsList className="grid grid-cols-2 w-full">
+                  <TabsTrigger value="single">Один</TabsTrigger>
+                  <TabsTrigger value="range">Діапазон</TabsTrigger>
+                </TabsList>
+                <TabsContent value="single" className="space-y-3 mt-3">
+                  <div><Label>Номер *</Label><Input value={number} onChange={e => setNumber(e.target.value)} /></div>
+                  <div><Label>Нотатки</Label><Textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} /></div>
+                </TabsContent>
+                <TabsContent value="range" className="space-y-3 mt-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label>Від *</Label><Input type="number" value={rangeFrom} onChange={e => setRangeFrom(e.target.value)} placeholder="1" /></div>
+                    <div><Label>До *</Label><Input type="number" value={rangeTo} onChange={e => setRangeTo(e.target.value)} placeholder="50" /></div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Створить {label.toLowerCase()}ів з номерами в діапазоні. До 200 за раз.</p>
+                </TabsContent>
+              </Tabs>
+              <div className="space-y-3 mt-3">
+                <div><Label>Порода</Label><Input value={breed} onChange={e => setBreed(e.target.value)} placeholder="Карпатка, Бакфаст…" /></div>
+                <div><Label>Рік матки</Label><Input type="number" value={queenYear} onChange={e => setQueenYear(e.target.value)} /></div>
+                <Button onClick={add} disabled={saving || (tab === "single" ? !number : !rangeFrom || !rangeTo)} className="w-full">
+                  {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Зберегти
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          {!!hives?.length && (
+            <Button size="sm" variant="outline" onClick={() => { setSelectedIds(new Set(hives.map((h: any) => h.id))); setPrintOpen(true); }}>
+              <FileDown className="w-4 h-4 mr-1" /> Друк QR
+            </Button>
+          )}
+        </div>
       </div>
 
       <h2 className="text-sm font-semibold text-muted-foreground mt-4 mb-2 uppercase tracking-wide">{title}</h2>
@@ -133,13 +217,51 @@ function PointPage() {
         </div>
       ) : (
         <Card className="p-6 text-center text-sm text-muted-foreground">
-          Тут поки нічого немає. Додайте перший {isNuclei ? "нуклеус" : "вулик"}.
+          Тут поки нічого немає. Додайте перший {label.toLowerCase()}.
         </Card>
       )}
 
       <Button variant="destructive" onClick={delPoint} className="w-full mt-6">
-        <Trash2 className="w-4 h-4 mr-2" /> Видалити точку
+        <Trash2 className="w-4 h-4 mr-2" /> Видалити точок
       </Button>
+
+      <Dialog open={printOpen} onOpenChange={setPrintOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Друк QR для {label.toLowerCase()}ів</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-between mb-2">
+            <Button variant="outline" size="sm" onClick={toggleAll}>
+              {hives && selectedIds.size === hives.length ? "Зняти всі" : "Вибрати всі"}
+            </Button>
+            <div className="text-sm text-muted-foreground">Вибрано: {selectedIds.size}</div>
+          </div>
+          <div className="max-h-72 overflow-y-auto space-y-1 border rounded p-2">
+            {hives?.map((h: any) => (
+              <label key={h.id} className="flex items-center gap-2 py-1 cursor-pointer">
+                <Checkbox
+                  checked={selectedIds.has(h.id)}
+                  onCheckedChange={(v) => {
+                    setSelectedIds(prev => {
+                      const next = new Set(prev);
+                      if (v) next.add(h.id); else next.delete(h.id);
+                      return next;
+                    });
+                  }}
+                />
+                <span>{label} №{h.number}</span>
+              </label>
+            ))}
+          </div>
+          <Button onClick={doPdf} disabled={pdfBusy || !selectedIds.size} className="w-full mt-3">
+            {pdfBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
+            Створити PDF
+          </Button>
+          <p className="text-xs text-muted-foreground text-center">
+            Один файл A4. Наклейки 50×50 мм з підписом «{label} №N».
+          </p>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

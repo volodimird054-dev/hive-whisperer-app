@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Loader2, MapPin, Boxes, Egg } from "lucide-react";
+import { Plus, Loader2, MapPin, Boxes, Egg, Crosshair } from "lucide-react";
 
 export const Route = createFileRoute("/_app/points/")({
   component: PointsPage,
@@ -21,7 +21,9 @@ type Point = {
   apiary_id: string;
   name: string;
   kind: "hives" | "nuclei";
-  location: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
   notes: string | null;
 };
 
@@ -47,8 +49,7 @@ function PointsPage() {
   const { data: counts } = useQuery({
     queryKey: ["points-counts"],
     queryFn: async () => {
-      const { data } = await (supabase.from("hives") as any)
-        .select("point_id");
+      const { data } = await (supabase.from("hives") as any).select("point_id");
       const map: Record<string, number> = {};
       (data ?? []).forEach((h: any) => {
         if (h.point_id) map[h.point_id] = (map[h.point_id] ?? 0) + 1;
@@ -60,22 +61,59 @@ function PointsPage() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [kind, setKind] = useState<"hives" | "nuclei">("hives");
-  const [location, setLocation] = useState("");
+  const [address, setAddress] = useState("");
+  const [lat, setLat] = useState<string>("");
+  const [lng, setLng] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [gpsBusy, setGpsBusy] = useState(false);
+
+  function useMyLocation() {
+    if (!navigator.geolocation) {
+      toast.error("Браузер не підтримує геолокацію");
+      return;
+    }
+    setGpsBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude.toFixed(6));
+        setLng(pos.coords.longitude.toFixed(6));
+        setGpsBusy(false);
+        toast.success("Координати визначено");
+      },
+      (err) => {
+        setGpsBusy(false);
+        toast.error("Не вдалося отримати координати: " + err.message);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
 
   async function add() {
     if (!apiary) {
       toast.error("Спочатку створіть пасіку у розділі «Моя пасіка»");
       return;
     }
+    const hasAddress = !!address.trim();
+    const hasGps = !!lat && !!lng;
+    if (!hasAddress && !hasGps) {
+      toast.error("Вкажіть адресу або GPS координати");
+      return;
+    }
     setSaving(true);
     const { error } = await (supabase.from as any)("apiary_points").insert({
-      apiary_id: apiary.id, name, kind, location: location || null, notes: notes || null,
+      apiary_id: apiary.id,
+      name,
+      kind,
+      address: address || null,
+      lat: lat ? Number(lat) : null,
+      lng: lng ? Number(lng) : null,
+      location: address || (hasGps ? `${lat},${lng}` : null), // зворотна сумісність
+      notes: notes || null,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
-    setName(""); setLocation(""); setNotes(""); setKind("hives");
+    setName(""); setAddress(""); setLat(""); setLng(""); setNotes(""); setKind("hives");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["points"] });
     toast.success("Точок додано");
@@ -106,7 +144,22 @@ function PointsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Розташування</Label><Input value={location} onChange={e => setLocation(e.target.value)} placeholder="с. Лісне" /></div>
+              <div>
+                <Label>Адреса</Label>
+                <Input value={address} onChange={e => setAddress(e.target.value)} placeholder="с. Лісне, вул. Польова 5" />
+                <p className="text-xs text-muted-foreground mt-1">Вкажіть або адресу, або GPS.</p>
+              </div>
+              <div>
+                <Label>GPS координати</Label>
+                <div className="flex gap-2">
+                  <Input value={lat} onChange={e => setLat(e.target.value)} placeholder="49.123456" />
+                  <Input value={lng} onChange={e => setLng(e.target.value)} placeholder="24.123456" />
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={useMyLocation} disabled={gpsBusy} className="mt-2 w-full">
+                  {gpsBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Crosshair className="w-4 h-4 mr-2" />}
+                  Моя геолокація
+                </Button>
+              </div>
               <div><Label>Нотатки</Label><Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} /></div>
               <Button onClick={add} disabled={!name || saving} className="w-full">
                 {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Створити
@@ -122,6 +175,7 @@ function PointsPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           {points.map(p => {
             const Icon = p.kind === "nuclei" ? Egg : Boxes;
+            const loc = p.address || (p.lat && p.lng ? `${p.lat?.toFixed?.(5) ?? p.lat}, ${p.lng?.toFixed?.(5) ?? p.lng}` : null);
             return (
               <Link key={p.id} to="/points/$pointId" params={{ pointId: p.id }}>
                 <Card className="p-4 hover:bg-accent/40 cursor-pointer h-full">
@@ -135,9 +189,9 @@ function PointsPage() {
                         {p.kind === "nuclei" ? "Нуклеусний парк" : "Точок вуликів"}
                         {" · "}{counts?.[p.id] ?? 0} шт
                       </div>
-                      {p.location && (
+                      {loc && (
                         <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                          <MapPin className="w-3 h-3" />{p.location}
+                          <MapPin className="w-3 h-3" />{loc}
                         </div>
                       )}
                     </div>
