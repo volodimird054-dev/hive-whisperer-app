@@ -223,11 +223,23 @@ export function VoiceFab() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="min-h-[120px] rounded-lg border bg-muted/40 p-4">
-            <div className={`whitespace-pre-wrap break-words ${listening ? "text-2xl leading-snug font-medium" : "text-base"}`}>
-              {transcript || <span className="text-muted-foreground text-base">Очікую вашу команду…</span>}
+          {listening ? (
+            <div className="min-h-[120px] rounded-lg border bg-muted/40 p-4">
+              <div className="whitespace-pre-wrap break-words text-2xl leading-snug font-medium">
+                {transcript || <span className="text-muted-foreground text-base">Очікую вашу команду…</span>}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div>
+              <textarea
+                value={transcript}
+                onChange={(e) => setTranscript(e.target.value)}
+                placeholder="Розпізнаний текст з'явиться тут. Можна відредагувати перед відправкою."
+                className="w-full min-h-[120px] rounded-lg border bg-background p-3 text-base resize-y"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Перевірте текст і за потреби відредагуйте.</p>
+            </div>
+          )}
 
           {reply && <div className="text-sm text-foreground/80 italic">🤖 {reply}</div>}
 
