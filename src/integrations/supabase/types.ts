@@ -81,30 +81,39 @@ export type Database = {
       }
       apiary_points: {
         Row: {
+          address: string | null
           apiary_id: string
           created_at: string
           id: string
           kind: Database["public"]["Enums"]["point_kind"]
+          lat: number | null
+          lng: number | null
           location: string | null
           name: string
           notes: string | null
           updated_at: string
         }
         Insert: {
+          address?: string | null
           apiary_id: string
           created_at?: string
           id?: string
           kind?: Database["public"]["Enums"]["point_kind"]
+          lat?: number | null
+          lng?: number | null
           location?: string | null
           name: string
           notes?: string | null
           updated_at?: string
         }
         Update: {
+          address?: string | null
           apiary_id?: string
           created_at?: string
           id?: string
           kind?: Database["public"]["Enums"]["point_kind"]
+          lat?: number | null
+          lng?: number | null
           location?: string | null
           name?: string
           notes?: string | null
@@ -333,40 +342,52 @@ export type Database = {
       }
       inspections: {
         Row: {
+          brood_level: string | null
           created_at: string
           frames_bees: number | null
           frames_brood: number | null
           hive_id: string
+          honey_level: string | null
           id: string
           inspected_at: string
           mood: string | null
           notes: string | null
           queen_seen: boolean | null
+          queen_status: string | null
           user_id: string
+          works: string[] | null
         }
         Insert: {
+          brood_level?: string | null
           created_at?: string
           frames_bees?: number | null
           frames_brood?: number | null
           hive_id: string
+          honey_level?: string | null
           id?: string
           inspected_at?: string
           mood?: string | null
           notes?: string | null
           queen_seen?: boolean | null
+          queen_status?: string | null
           user_id: string
+          works?: string[] | null
         }
         Update: {
+          brood_level?: string | null
           created_at?: string
           frames_bees?: number | null
           frames_brood?: number | null
           hive_id?: string
+          honey_level?: string | null
           id?: string
           inspected_at?: string
           mood?: string | null
           notes?: string | null
           queen_seen?: boolean | null
+          queen_status?: string | null
           user_id?: string
+          works?: string[] | null
         }
         Relationships: [
           {
