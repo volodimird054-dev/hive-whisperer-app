@@ -192,6 +192,8 @@ function InspectionRow({ i }: { i: any }) {
     labelFor(QUEEN_OPTIONS, i.queen_status) && `Матка: ${labelFor(QUEEN_OPTIONS, i.queen_status)}`,
     labelFor(BROOD_OPTIONS, i.brood_level) && `Розплід: ${labelFor(BROOD_OPTIONS, i.brood_level)}`,
     labelFor(HONEY_OPTIONS, i.honey_level) && `Мед: ${labelFor(HONEY_OPTIONS, i.honey_level)}`,
+    labelFor(AGGRESSION_OPTIONS, i.aggression) && `Агресивність: ${labelFor(AGGRESSION_OPTIONS, i.aggression)}`,
+    labelFor(SWARMING_OPTIONS, i.swarming) && `Ройливість: ${labelFor(SWARMING_OPTIONS, i.swarming)}`,
   ].filter(Boolean).join(" · ");
   const worksList: string[] = Array.isArray(i.works) ? i.works.map((w: string) => labelFor(WORKS_OPTIONS, w)!).filter(Boolean) : [];
   return (
