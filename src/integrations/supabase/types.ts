@@ -342,6 +342,7 @@ export type Database = {
       }
       inspections: {
         Row: {
+          aggression: string | null
           brood_level: string | null
           created_at: string
           frames_bees: number | null
@@ -354,10 +355,12 @@ export type Database = {
           notes: string | null
           queen_seen: boolean | null
           queen_status: string | null
+          swarming: string | null
           user_id: string
           works: string[] | null
         }
         Insert: {
+          aggression?: string | null
           brood_level?: string | null
           created_at?: string
           frames_bees?: number | null
@@ -370,10 +373,12 @@ export type Database = {
           notes?: string | null
           queen_seen?: boolean | null
           queen_status?: string | null
+          swarming?: string | null
           user_id: string
           works?: string[] | null
         }
         Update: {
+          aggression?: string | null
           brood_level?: string | null
           created_at?: string
           frames_bees?: number | null
@@ -386,6 +391,7 @@ export type Database = {
           notes?: string | null
           queen_seen?: boolean | null
           queen_status?: string | null
+          swarming?: string | null
           user_id?: string
           works?: string[] | null
         }

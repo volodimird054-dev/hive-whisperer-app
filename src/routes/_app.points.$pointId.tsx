@@ -9,11 +9,19 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Loader2, ArrowLeft, Trash2, FileDown, MapPin } from "lucide-react";
+import { Plus, Loader2, ArrowLeft, Trash2, FileDown, MapPin, MoreVertical, Search } from "lucide-react";
 import { HiveCard } from "@/components/hive-card";
 import { generateHivesPdf } from "@/components/hive-qr";
+import { sortHives, filterHives } from "@/lib/hive-sort";
 
 export const Route = createFileRoute("/_app/points/$pointId")({
   component: PointPage,
@@ -36,7 +44,7 @@ function PointPage() {
     queryKey: ["point-hives", pointId],
     queryFn: async () => {
       const { data } = await (supabase.from("hives") as any)
-        .select("*").eq("point_id", pointId).order("number");
+        .select("*").eq("point_id", pointId);
       return data ?? [];
     },
     enabled: !!point,
@@ -55,9 +63,14 @@ function PointPage() {
   const [printOpen, setPrintOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [query, setQuery] = useState("");
 
   const isNuclei = point?.kind === "nuclei";
   const label = isNuclei ? "Нуклеус" : "Вулик";
+
+  const sortedHives = useMemo(() => sortHives(hives), [hives]);
+  const visibleHives = useMemo(() => sortHives(filterHives(hives, query)), [hives, query]);
 
   async function add() {
     setSaving(true);
@@ -107,22 +120,17 @@ function PointPage() {
   }
 
   async function delPoint() {
-    if (!confirm("Видалити точок? Всі прикріплені вулики стануть «без точка».")) return;
     const { error } = await (supabase.from as any)("apiary_points").delete().eq("id", pointId);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["points"] });
     window.history.back();
   }
 
-  function toggleAll() {
-    if (!hives) return;
-    if (selectedIds.size === hives.length) setSelectedIds(new Set());
-    else setSelectedIds(new Set(hives.map((h: any) => h.id)));
-  }
+  function selectAll() { setSelectedIds(new Set(sortedHives.map((h: any) => h.id))); }
+  function clearAll() { setSelectedIds(new Set()); }
 
   async function doPdf() {
-    if (!hives) return;
-    const sel = hives.filter((h: any) => selectedIds.has(h.id));
+    const sel = sortedHives.filter((h: any) => selectedIds.has(h.id));
     if (!sel.length) return toast.error("Виберіть хоча б один");
     setPdfBusy(true);
     try {
@@ -157,7 +165,7 @@ function PointPage() {
             </p>
           )}
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Додати</Button>
@@ -192,18 +200,46 @@ function PointPage() {
               </div>
             </DialogContent>
           </Dialog>
-          {!!hives?.length && (
-            <Button size="sm" variant="outline" onClick={() => { setSelectedIds(new Set(hives.map((h: any) => h.id))); setPrintOpen(true); }}>
-              <FileDown className="w-4 h-4 mr-1" /> Друк QR
-            </Button>
-          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" aria-label="Меню точка">
+                <MoreVertical className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                disabled={!sortedHives.length}
+                onClick={() => { selectAll(); setPrintOpen(true); }}
+              >
+                <FileDown className="w-4 h-4 mr-2" /> Друк QR
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setConfirmDel(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" /> Видалити точок
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      <h2 className="text-sm font-semibold text-muted-foreground mt-4 mb-2 uppercase tracking-wide">{title}</h2>
-      {hives && hives.length > 0 ? (
+      <div className="relative mb-3">
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Пошук за номером, породою, роком матки…"
+          className="pl-9"
+        />
+      </div>
+
+      <h2 className="text-sm font-semibold text-muted-foreground mt-2 mb-2 uppercase tracking-wide">{title}</h2>
+      {visibleHives.length > 0 ? (
         <div className="space-y-2">
-          {hives.map((h: any) => (
+          {visibleHives.map((h: any) => (
             <HiveCard
               key={h.id}
               hive={h}
@@ -215,29 +251,51 @@ function PointPage() {
             />
           ))}
         </div>
+      ) : sortedHives.length ? (
+        <Card className="p-6 text-center text-sm text-muted-foreground">
+          Нічого не знайдено за запитом «{query}».
+        </Card>
       ) : (
         <Card className="p-6 text-center text-sm text-muted-foreground">
           Тут поки нічого немає. Додайте перший {label.toLowerCase()}.
         </Card>
       )}
 
-      <Button variant="destructive" onClick={delPoint} className="w-full mt-6">
-        <Trash2 className="w-4 h-4 mr-2" /> Видалити точок
-      </Button>
+      <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Видалити точок «{point.name}»?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Прикріплені {label.toLowerCase()}и не буде видалено — вони стануть «без точка».
+              Цю дію не можна скасувати.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Скасувати</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={delPoint}
+            >
+              Видалити
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={printOpen} onOpenChange={setPrintOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Друк QR для {label.toLowerCase()}ів</DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-between mb-2">
-            <Button variant="outline" size="sm" onClick={toggleAll}>
-              {hives && selectedIds.size === hives.length ? "Зняти всі" : "Вибрати всі"}
-            </Button>
+          <div className="flex items-center justify-between mb-2 gap-2">
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={selectAll}>Вибрати всі</Button>
+              <Button variant="outline" size="sm" onClick={clearAll}>Зняти всі</Button>
+            </div>
             <div className="text-sm text-muted-foreground">Вибрано: {selectedIds.size}</div>
           </div>
           <div className="max-h-72 overflow-y-auto space-y-1 border rounded p-2">
-            {hives?.map((h: any) => (
+            {sortedHives.map((h: any) => (
               <label key={h.id} className="flex items-center gap-2 py-1 cursor-pointer">
                 <Checkbox
                   checked={selectedIds.has(h.id)}
@@ -255,7 +313,7 @@ function PointPage() {
           </div>
           <Button onClick={doPdf} disabled={pdfBusy || !selectedIds.size} className="w-full mt-3">
             {pdfBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}
-            Створити PDF
+            Створити PDF ({selectedIds.size})
           </Button>
           <p className="text-xs text-muted-foreground text-center">
             Один файл A4. Наклейки 50×50 мм з підписом «{label} №N».

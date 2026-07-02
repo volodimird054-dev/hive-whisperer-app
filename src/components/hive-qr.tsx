@@ -7,7 +7,7 @@ import { QrCode, Printer, FileDown } from "lucide-react";
 
 const QR_PX = 720;
 
-// Малює QR + білий круг з номером посередині на canvas
+// Малює QR + білий круг з номером посередині на canvas.
 export async function renderHiveQrToCanvas(
   canvas: HTMLCanvasElement,
   hiveId: string,
@@ -26,9 +26,7 @@ export async function renderHiveQrToCanvas(
   const cx = w / 2;
   const cy = w / 2;
   const text = String(number);
-  // Радіус залежить від довжини номера, але не більше 22% від QR
-  const baseR = Math.min(w * 0.22, w * (0.13 + text.length * 0.02));
-  // Білий круг з тонкою рамкою
+  const baseR = Math.min(w * 0.18, w * (0.11 + text.length * 0.018));
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
   ctx.arc(cx, cy, baseR, 0, Math.PI * 2);
@@ -38,20 +36,40 @@ export async function renderHiveQrToCanvas(
   ctx.beginPath();
   ctx.arc(cx, cy, baseR, 0, Math.PI * 2);
   ctx.stroke();
-  // Номер
   ctx.fillStyle = "#1a1206";
-  ctx.font = `900 ${Math.floor(baseR * 1.1)}px system-ui, sans-serif`;
+  ctx.font = `900 ${Math.floor(baseR * 1.05)}px system-ui, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(text, cx, cy + baseR * 0.05);
 }
 
-async function generateQrDataUrl(hiveId: string, number: string | number) {
-  const c = document.createElement("canvas");
-  c.width = QR_PX;
-  c.height = QR_PX;
-  await renderHiveQrToCanvas(c, hiveId, number);
-  return c.toDataURL("image/png");
+// Composite: QR + підпис знизу. Оскільки jsPDF helvetica не має кирилиці,
+// весь лейбл (QR + текст) малюємо як одну картинку — так підпис завжди
+// відображається правильно і у екрані, і у PDF, і у друці.
+async function renderLabelCanvas(
+  hiveId: string,
+  number: string | number,
+  label: string,
+): Promise<HTMLCanvasElement> {
+  const qr = document.createElement("canvas");
+  qr.width = QR_PX;
+  qr.height = QR_PX;
+  await renderHiveQrToCanvas(qr, hiveId, number);
+
+  const captionH = Math.floor(QR_PX * 0.14);
+  const canvas = document.createElement("canvas");
+  canvas.width = QR_PX;
+  canvas.height = QR_PX + captionH;
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(qr, 0, 0);
+  ctx.fillStyle = "#1a1206";
+  ctx.font = `800 ${Math.floor(captionH * 0.62)}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`${label} №${number}`, canvas.width / 2, QR_PX + captionH / 2);
+  return canvas;
 }
 
 export function HiveQrButton({
@@ -80,41 +98,37 @@ export function HiveQrButton({
     return () => clearTimeout(t);
   }, [open, hiveId, number]);
 
-  function print() {
-    if (!canvasRef.current) return;
-    const dataUrl = canvasRef.current.toDataURL("image/png");
+  async function print() {
+    const composite = await renderLabelCanvas(hiveId, number, label);
+    const dataUrl = composite.toDataURL("image/png");
     const w = window.open("", "_blank", "width=400,height=520");
     if (!w) return;
-    w.document.write(`<!doctype html><html><head><title>QR ${label.toLowerCase()} №${number}</title>
+    w.document.write(`<!doctype html><html><head><title>QR ${label} №${number}</title>
 <style>
   @page { size: auto; margin: 8mm; }
   body { font-family: system-ui, sans-serif; text-align: center; margin: 0; padding: 6mm; }
-  .qr { width: 50mm; height: 50mm; display: block; margin: 0 auto; image-rendering: pixelated; }
-  .lbl { font-size: 14pt; margin-top: 3mm; font-weight: 800; }
+  .qr { width: 50mm; height: auto; display: block; margin: 0 auto; image-rendering: pixelated; }
 </style></head><body>
   <img class="qr" src="${dataUrl}" />
-  <div class="lbl">${label} №${number}</div>
   <script>window.onload=()=>{setTimeout(()=>{window.print();},250);}</script>
 </body></html>`);
     w.document.close();
   }
 
-  function downloadPdf() {
-    if (!canvasRef.current) return;
-    const dataUrl = canvasRef.current.toDataURL("image/png");
+  async function downloadPdf() {
+    const composite = await renderLabelCanvas(hiveId, number, label);
+    const dataUrl = composite.toDataURL("image/png");
     const labelW = 55;
     const labelH = 62;
     const pdf = new jsPDF({ unit: "mm", format: [labelW, labelH], orientation: "portrait" });
-    const qrSize = 50;
-    const x = (labelW - qrSize) / 2;
-    const y = 4;
-    pdf.addImage(dataUrl, "PNG", x, y, qrSize, qrSize, undefined, "FAST");
-    pdf.setDrawColor(180);
+    const imgSize = 50;
+    const imgH = imgSize * (composite.height / composite.width);
+    const x = (labelW - imgSize) / 2;
+    const y = (labelH - imgH) / 2;
+    pdf.addImage(dataUrl, "PNG", x, y, imgSize, imgH, undefined, "FAST");
+    pdf.setDrawColor(200);
     pdf.setLineWidth(0.3);
     pdf.rect(1, 1, labelW - 2, labelH - 2);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(14);
-    pdf.text(`${label} #${number}`, labelW / 2, y + qrSize + 6, { align: "center" });
     pdf.save(`hive-${number}.pdf`);
   }
 
@@ -129,19 +143,20 @@ export function HiveQrButton({
             <DialogTitle>QR {label.toLowerCase()} №{number}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center gap-3">
+            {/* Завжди квадратний QR, обмежений максимальним розміром */}
             <div
-              className="bg-white rounded border flex items-center justify-center"
-              style={{ width: 260, height: 260, padding: 8 }}
+              className="bg-white rounded border p-3"
+              style={{ width: "min(80vw, 260px)", aspectRatio: "1 / 1" }}
             >
               <canvas
                 ref={canvasRef}
                 width={QR_PX}
                 height={QR_PX}
-                style={{ width: 244, height: 244, imageRendering: "pixelated", display: "block" }}
+                style={{ width: "100%", height: "100%", imageRendering: "pixelated", display: "block" }}
               />
             </div>
             <p className="text-xs text-muted-foreground text-center">
-              QR створено один раз для цього вулика — не змінюється. Друк — 5×5 см.
+              Наклейка 50×50 мм. QR стабільний для цього {label.toLowerCase()}а.
             </p>
             <div className="grid grid-cols-2 gap-2 w-full">
               <Button onClick={print} disabled={!ready} variant="outline">
@@ -159,8 +174,8 @@ export function HiveQrButton({
 }
 
 /**
- * Створює PDF на A4 з наклейками 50×50 мм (з підписом «Вулик №N» знизу)
- * для вибраних вуликів. Один файл, автоматична сітка.
+ * PDF на A4 з наклейками 50×50 мм. Підпис («Вулик №N») малюється прямо
+ * на QR-зображенні через canvas — тому кирилиця в PDF відображається правильно.
  */
 export async function generateHivesPdf(
   hives: Array<{ id: string; number: string | number }>,
@@ -171,11 +186,12 @@ export async function generateHivesPdf(
   const pageH = 297;
   const marginX = 10;
   const marginY = 12;
-  const cellW = 60; // 50мм QR + поля
-  const cellH = 65; // QR + підпис
-  const cols = Math.floor((pageW - marginX * 2) / cellW); // ~3
-  const rows = Math.floor((pageH - marginY * 2) / cellH); // ~4
+  const cellW = 60;
+  const cellH = 65;
+  const cols = Math.max(1, Math.floor((pageW - marginX * 2) / cellW));
+  const rows = Math.max(1, Math.floor((pageH - marginY * 2) / cellH));
   const perPage = cols * rows;
+  const imgSize = 50;
 
   for (let i = 0; i < hives.length; i++) {
     if (i > 0 && i % perPage === 0) pdf.addPage();
@@ -184,17 +200,15 @@ export async function generateHivesPdf(
     const c = idxOnPage % cols;
     const x0 = marginX + c * cellW;
     const y0 = marginY + r * cellH;
-    const qrSize = 50;
-    const qrX = x0 + (cellW - qrSize) / 2;
-    const qrY = y0 + 2;
-    const dataUrl = await generateQrDataUrl(hives[i].id, hives[i].number);
-    pdf.addImage(dataUrl, "PNG", qrX, qrY, qrSize, qrSize, undefined, "FAST");
+    const composite = await renderLabelCanvas(hives[i].id, hives[i].number, label);
+    const dataUrl = composite.toDataURL("image/png");
+    const imgH = imgSize * (composite.height / composite.width);
+    const imgX = x0 + (cellW - imgSize) / 2;
+    const imgY = y0 + (cellH - imgH) / 2;
+    pdf.addImage(dataUrl, "PNG", imgX, imgY, imgSize, imgH, undefined, "FAST");
     pdf.setDrawColor(220);
     pdf.setLineWidth(0.2);
     pdf.rect(x0 + 1, y0 + 1, cellW - 2, cellH - 2);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(12);
-    pdf.text(`${label} #${hives[i].number}`, x0 + cellW / 2, qrY + qrSize + 6, { align: "center" });
   }
   pdf.save(`qr-${label.toLowerCase()}-${hives.length}.pdf`);
 }

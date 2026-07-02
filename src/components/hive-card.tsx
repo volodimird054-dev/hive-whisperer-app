@@ -13,6 +13,22 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Trash2, Pencil, Plus, CalendarClock } from "lucide-react";
 import { HiveQrButton } from "@/components/hive-qr";
+import { VoiceTextarea } from "@/components/voice-textarea";
+
+const AGGRESSION_OPTIONS = [
+  { v: "very_calm", l: "Дуже спокійна" },
+  { v: "calm", l: "Спокійна" },
+  { v: "medium", l: "Середня" },
+  { v: "aggressive", l: "Агресивна" },
+  { v: "very_aggressive", l: "Дуже агресивна" },
+];
+const SWARMING_OPTIONS = [
+  { v: "none", l: "Ознак немає" },
+  { v: "cups_few", l: "Поодинокі мисочки" },
+  { v: "cups_many", l: "Багато мисочок" },
+  { v: "queen_cells", l: "Закладені маточники" },
+  { v: "swarm_state", l: "Ройовий стан" },
+];
 
 const QUEEN_OPTIONS = [
   { v: "present", l: "Є" },
@@ -58,6 +74,8 @@ function InspectionForm({
   const [queen, setQueen] = useState("");
   const [brood, setBrood] = useState("");
   const [honey, setHoney] = useState("");
+  const [aggression, setAggression] = useState("");
+  const [swarming, setSwarming] = useState("");
   const [works, setWorks] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -75,6 +93,8 @@ function InspectionForm({
       queen_status: queen || null,
       brood_level: brood || null,
       honey_level: honey || null,
+      aggression: aggression || null,
+      swarming: swarming || null,
       works: works.length ? works : null,
       notes: notes || null,
     });
@@ -120,6 +140,28 @@ function InspectionForm({
         </RadioGroup>
       </div>
       <div>
+        <Label className="mb-2 block">Агресивність</Label>
+        <RadioGroup value={aggression} onValueChange={setAggression} className="grid grid-cols-1 gap-1">
+          {AGGRESSION_OPTIONS.map((o) => (
+            <label key={o.v} className="flex items-center gap-2 cursor-pointer">
+              <RadioGroupItem value={o.v} id={`a-${o.v}`} />
+              <span>{o.l}</span>
+            </label>
+          ))}
+        </RadioGroup>
+      </div>
+      <div>
+        <Label className="mb-2 block">Ройливість</Label>
+        <RadioGroup value={swarming} onValueChange={setSwarming} className="grid grid-cols-1 gap-1">
+          {SWARMING_OPTIONS.map((o) => (
+            <label key={o.v} className="flex items-center gap-2 cursor-pointer">
+              <RadioGroupItem value={o.v} id={`s-${o.v}`} />
+              <span>{o.l}</span>
+            </label>
+          ))}
+        </RadioGroup>
+      </div>
+      <div>
         <Label className="mb-2 block">Роботи</Label>
         <div className="grid grid-cols-1 gap-1">
           {WORKS_OPTIONS.map((o) => (
@@ -132,7 +174,7 @@ function InspectionForm({
       </div>
       <div>
         <Label className="mb-2 block">Примітка</Label>
-        <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Текст або скористайтеся голосовою кнопкою." />
+        <VoiceTextarea rows={3} value={notes} onChange={setNotes} placeholder="Опишіть огляд або натисніть мікрофон." />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <Button variant="outline" onClick={onCancel}>Скасувати</Button>
@@ -150,6 +192,8 @@ function InspectionRow({ i }: { i: any }) {
     labelFor(QUEEN_OPTIONS, i.queen_status) && `Матка: ${labelFor(QUEEN_OPTIONS, i.queen_status)}`,
     labelFor(BROOD_OPTIONS, i.brood_level) && `Розплід: ${labelFor(BROOD_OPTIONS, i.brood_level)}`,
     labelFor(HONEY_OPTIONS, i.honey_level) && `Мед: ${labelFor(HONEY_OPTIONS, i.honey_level)}`,
+    labelFor(AGGRESSION_OPTIONS, i.aggression) && `Агресивність: ${labelFor(AGGRESSION_OPTIONS, i.aggression)}`,
+    labelFor(SWARMING_OPTIONS, i.swarming) && `Ройливість: ${labelFor(SWARMING_OPTIONS, i.swarming)}`,
   ].filter(Boolean).join(" · ");
   const worksList: string[] = Array.isArray(i.works) ? i.works.map((w: string) => labelFor(WORKS_OPTIONS, w)!).filter(Boolean) : [];
   return (

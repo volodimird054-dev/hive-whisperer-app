@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, Search } from "lucide-react";
 import { HiveCard } from "@/components/hive-card";
+import { sortHives, filterHives } from "@/lib/hive-sort";
 
 export const Route = createFileRoute("/_app/hives")({
   component: HivesPage,
@@ -21,7 +22,7 @@ function HivesPage() {
   const { data: hives, isLoading } = useQuery({
     queryKey: ["hives"],
     queryFn: async () => {
-      const { data } = await supabase.from("hives").select("*").order("number");
+      const { data } = await supabase.from("hives").select("*");
       return data ?? [];
     },
   });
@@ -33,6 +34,7 @@ function HivesPage() {
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [scannedId, setScannedId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -42,6 +44,8 @@ function HivesPage() {
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
+
+  const visible = useMemo(() => sortHives(filterHives(hives, query)), [hives, query]);
 
   async function add() {
     setSaving(true);
@@ -86,14 +90,28 @@ function HivesPage() {
         </div>
       </div>
 
+      <div className="relative mb-3">
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Пошук за номером, породою, роком матки…"
+          className="pl-9"
+        />
+      </div>
+
       {isLoading ? (
         <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />
-      ) : hives && hives.length > 0 ? (
+      ) : visible.length > 0 ? (
         <div className="space-y-2">
-          {hives.map(h => (
+          {visible.map(h => (
             <HiveCard key={h.id} hive={h} forceOpen={scannedId === h.id} onChange={() => qc.invalidateQueries({ queryKey: ["hives"] })} />
           ))}
         </div>
+      ) : hives?.length ? (
+        <Card className="p-8 text-center text-muted-foreground">
+          Нічого не знайдено за запитом «{query}».
+        </Card>
       ) : (
         <Card className="p-8 text-center text-muted-foreground">
           Поки що немає вуликів. Додайте перший або скажіть голосом: «Додай вулик номер 1».
@@ -102,4 +120,3 @@ function HivesPage() {
     </div>
   );
 }
-
