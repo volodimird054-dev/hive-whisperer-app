@@ -140,6 +140,28 @@ function InspectionForm({
         </RadioGroup>
       </div>
       <div>
+        <Label className="mb-2 block">Агресивність</Label>
+        <RadioGroup value={aggression} onValueChange={setAggression} className="grid grid-cols-1 gap-1">
+          {AGGRESSION_OPTIONS.map((o) => (
+            <label key={o.v} className="flex items-center gap-2 cursor-pointer">
+              <RadioGroupItem value={o.v} id={`a-${o.v}`} />
+              <span>{o.l}</span>
+            </label>
+          ))}
+        </RadioGroup>
+      </div>
+      <div>
+        <Label className="mb-2 block">Ройливість</Label>
+        <RadioGroup value={swarming} onValueChange={setSwarming} className="grid grid-cols-1 gap-1">
+          {SWARMING_OPTIONS.map((o) => (
+            <label key={o.v} className="flex items-center gap-2 cursor-pointer">
+              <RadioGroupItem value={o.v} id={`s-${o.v}`} />
+              <span>{o.l}</span>
+            </label>
+          ))}
+        </RadioGroup>
+      </div>
+      <div>
         <Label className="mb-2 block">Роботи</Label>
         <div className="grid grid-cols-1 gap-1">
           {WORKS_OPTIONS.map((o) => (
@@ -152,7 +174,7 @@ function InspectionForm({
       </div>
       <div>
         <Label className="mb-2 block">Примітка</Label>
-        <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Текст або скористайтеся голосовою кнопкою." />
+        <VoiceTextarea rows={3} value={notes} onChange={setNotes} placeholder="Опишіть огляд або натисніть мікрофон." />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <Button variant="outline" onClick={onCancel}>Скасувати</Button>
