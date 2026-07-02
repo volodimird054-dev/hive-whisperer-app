@@ -13,6 +13,22 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, Trash2, Pencil, Plus, CalendarClock } from "lucide-react";
 import { HiveQrButton } from "@/components/hive-qr";
+import { VoiceTextarea } from "@/components/voice-textarea";
+
+const AGGRESSION_OPTIONS = [
+  { v: "very_calm", l: "Дуже спокійна" },
+  { v: "calm", l: "Спокійна" },
+  { v: "medium", l: "Середня" },
+  { v: "aggressive", l: "Агресивна" },
+  { v: "very_aggressive", l: "Дуже агресивна" },
+];
+const SWARMING_OPTIONS = [
+  { v: "none", l: "Ознак немає" },
+  { v: "cups_few", l: "Поодинокі мисочки" },
+  { v: "cups_many", l: "Багато мисочок" },
+  { v: "queen_cells", l: "Закладені маточники" },
+  { v: "swarm_state", l: "Ройовий стан" },
+];
 
 const QUEEN_OPTIONS = [
   { v: "present", l: "Є" },
