@@ -74,6 +74,8 @@ function InspectionForm({
   const [queen, setQueen] = useState("");
   const [brood, setBrood] = useState("");
   const [honey, setHoney] = useState("");
+  const [aggression, setAggression] = useState("");
+  const [swarming, setSwarming] = useState("");
   const [works, setWorks] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -91,6 +93,8 @@ function InspectionForm({
       queen_status: queen || null,
       brood_level: brood || null,
       honey_level: honey || null,
+      aggression: aggression || null,
+      swarming: swarming || null,
       works: works.length ? works : null,
       notes: notes || null,
     });
