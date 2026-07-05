@@ -268,6 +268,7 @@ export type Database = {
       hives: {
         Row: {
           apiary_id: string | null
+          archived_at: string | null
           breed: string | null
           created_at: string
           frames_brood: number | null
@@ -287,6 +288,7 @@ export type Database = {
         }
         Insert: {
           apiary_id?: string | null
+          archived_at?: string | null
           breed?: string | null
           created_at?: string
           frames_brood?: number | null
@@ -306,6 +308,7 @@ export type Database = {
         }
         Update: {
           apiary_id?: string | null
+          archived_at?: string | null
           breed?: string | null
           created_at?: string
           frames_brood?: number | null
