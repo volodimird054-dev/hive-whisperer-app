@@ -77,7 +77,16 @@ function PointPage() {
     const { data: u } = await supabase.auth.getUser();
     const user_id = u.user!.id;
 
+    // Всі активні номери в цьому точку — для перевірки дублікатів
+    const { data: existingRows } = await (supabase.from("hives") as any)
+      .select("number").eq("point_id", pointId).is("archived_at", null);
+    const existing = new Set<string>((existingRows ?? []).map((r: any) => String(r.number)));
+
     if (tab === "single") {
+      if (existing.has(String(number))) {
+        setSaving(false);
+        return toast.error(`${label} №${number} вже існує в цьому точку.`);
+      }
       const { error } = await (supabase.from("hives") as any).insert({
         user_id, apiary_id: point.apiary_id, point_id: pointId,
         number, breed: breed || null,
@@ -85,7 +94,10 @@ function PointPage() {
         notes: notes || null,
       });
       setSaving(false);
-      if (error) return toast.error(error.message);
+      if (error) {
+        if ((error as any).code === "23505") return toast.error(`${label} №${number} вже існує в цьому точку.`);
+        return toast.error(error.message);
+      }
       toast.success(`${label} додано`);
     } else {
       const from = parseInt(rangeFrom, 10);
@@ -99,7 +111,9 @@ function PointPage() {
         return toast.error("Максимум 200 за раз");
       }
       const rows = [];
+      const dupes: number[] = [];
       for (let n = from; n <= to; n++) {
+        if (existing.has(String(n))) { dupes.push(n); continue; }
         rows.push({
           user_id, apiary_id: point.apiary_id, point_id: pointId,
           number: String(n),
@@ -107,16 +121,29 @@ function PointPage() {
           queen_year: queenYear ? Number(queenYear) : null,
         });
       }
+      if (!rows.length) {
+        setSaving(false);
+        return toast.error(`Всі номери у діапазоні вже існують у цьому точку.`);
+      }
       const { error } = await (supabase.from("hives") as any).insert(rows);
       setSaving(false);
-      if (error) return toast.error(error.message);
-      toast.success(`Створено ${rows.length} ${label.toLowerCase()}ів`);
+      if (error) {
+        if ((error as any).code === "23505") return toast.error("Деякі номери вже існують у цьому точку.");
+        return toast.error(error.message);
+      }
+      const msg = dupes.length
+        ? `Створено ${rows.length}. Пропущено дублікати: ${dupes.join(", ")}`
+        : `Створено ${rows.length} ${label.toLowerCase()}ів`;
+      toast.success(msg);
     }
     setNumber(""); setRangeFrom(""); setRangeTo("");
     setBreed(""); setQueenYear(""); setNotes("");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["point-hives", pointId] });
     qc.invalidateQueries({ queryKey: ["points-counts"] });
+    qc.invalidateQueries({ queryKey: ["hives"] });
+    qc.invalidateQueries({ queryKey: ["stats"] });
+    qc.invalidateQueries({ queryKey: ["archived-hives"] });
   }
 
   async function delPoint() {
