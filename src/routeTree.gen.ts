@@ -19,6 +19,7 @@ import { Route as AppMarketplaceRouteImport } from './routes/_app.marketplace'
 import { Route as AppHivesRouteImport } from './routes/_app.hives'
 import { Route as AppChatRouteImport } from './routes/_app.chat'
 import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
+import { Route as AppArchiveRouteImport } from './routes/_app.archive'
 import { Route as AppApiaryRouteImport } from './routes/_app.apiary'
 import { Route as AppPointsIndexRouteImport } from './routes/_app.points.index'
 import { Route as AppPointsPointIdRouteImport } from './routes/_app.points.$pointId'
@@ -72,6 +73,11 @@ const AppCalendarRoute = AppCalendarRouteImport.update({
   path: '/calendar',
   getParentRoute: () => AppRoute,
 } as any)
+const AppArchiveRoute = AppArchiveRouteImport.update({
+  id: '/archive',
+  path: '/archive',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppApiaryRoute = AppApiaryRouteImport.update({
   id: '/apiary',
   path: '/apiary',
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/auth': typeof AuthRoute
   '/apiary': typeof AppApiaryRoute
+  '/archive': typeof AppArchiveRoute
   '/calendar': typeof AppCalendarRoute
   '/chat': typeof AppChatRoute
   '/hives': typeof AppHivesRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/apiary': typeof AppApiaryRoute
+  '/archive': typeof AppArchiveRoute
   '/calendar': typeof AppCalendarRoute
   '/chat': typeof AppChatRoute
   '/hives': typeof AppHivesRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/auth': typeof AuthRoute
   '/_app/apiary': typeof AppApiaryRoute
+  '/_app/archive': typeof AppArchiveRoute
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/chat': typeof AppChatRoute
   '/_app/hives': typeof AppHivesRoute
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/apiary'
+    | '/archive'
     | '/calendar'
     | '/chat'
     | '/hives'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/apiary'
+    | '/archive'
     | '/calendar'
     | '/chat'
     | '/hives'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/auth'
     | '/_app/apiary'
+    | '/_app/archive'
     | '/_app/calendar'
     | '/_app/chat'
     | '/_app/hives'
@@ -253,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCalendarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/archive': {
+      id: '/_app/archive'
+      path: '/archive'
+      fullPath: '/archive'
+      preLoaderRoute: typeof AppArchiveRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/apiary': {
       id: '/_app/apiary'
       path: '/apiary'
@@ -293,6 +312,7 @@ const AppPointsRouteWithChildren = AppPointsRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppApiaryRoute: typeof AppApiaryRoute
+  AppArchiveRoute: typeof AppArchiveRoute
   AppCalendarRoute: typeof AppCalendarRoute
   AppChatRoute: typeof AppChatRoute
   AppHivesRoute: typeof AppHivesRoute
@@ -305,6 +325,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppApiaryRoute: AppApiaryRoute,
+  AppArchiveRoute: AppArchiveRoute,
   AppCalendarRoute: AppCalendarRoute,
   AppChatRoute: AppChatRoute,
   AppHivesRoute: AppHivesRoute,

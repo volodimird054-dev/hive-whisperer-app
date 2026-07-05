@@ -33,8 +33,7 @@ function ArchivePage() {
   const list = sortHives(hives);
 
   async function restore(id: string, num: string | number) {
-    // Перевірка на конфлікт номерів
-    const h = list.find((x: any) => x.id === id);
+    const h = (hives ?? []).find((x: any) => x.id === id) as any;
     if (h?.point_id) {
       const { data: dup } = await (supabase.from("hives") as any)
         .select("id").eq("point_id", h.point_id).eq("number", String(h.number))
