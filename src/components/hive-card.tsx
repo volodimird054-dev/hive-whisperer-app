@@ -266,6 +266,16 @@ export function HiveCard({
 
   async function save() {
     setSaving(true);
+    // Дублікат номера в межах точка
+    if (String(number) !== String(hive.number) && hive.point_id) {
+      const { data: dup } = await (supabase.from("hives") as any)
+        .select("id").eq("point_id", hive.point_id).eq("number", String(number))
+        .is("archived_at", null).maybeSingle();
+      if (dup && dup.id !== hive.id) {
+        setSaving(false);
+        return toast.error(`${labelSingular} №${number} вже існує в цьому точку.`);
+      }
+    }
     const { error } = await supabase
       .from("hives")
       .update({
@@ -276,16 +286,22 @@ export function HiveCard({
       })
       .eq("id", hive.id);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if ((error as any).code === "23505") return toast.error(`${labelSingular} №${number} вже існує в цьому точку.`);
+      return toast.error(error.message);
+    }
     toast.success("Збережено");
     setEdit(false);
     onChange();
   }
 
   async function del() {
-    if (!confirm(`Видалити ${labelSingular.toLowerCase()} ${hive.number}?`)) return;
-    const { error } = await supabase.from("hives").delete().eq("id", hive.id);
+    if (!confirm(`Перенести ${labelSingular.toLowerCase()} №${hive.number} в архів?`)) return;
+    const { error } = await (supabase.from("hives") as any)
+      .update({ archived_at: new Date().toISOString() })
+      .eq("id", hive.id);
     if (error) return toast.error(error.message);
+    toast.success("Переміщено в архів");
     onChange();
     setOpen(false);
   }
