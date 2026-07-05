@@ -87,7 +87,8 @@ export function VoiceFab() {
 
     async function findHive(num: string | undefined) {
       if (!num) return null;
-      const { data } = await supabase.from("hives").select("id").eq("number", String(num)).maybeSingle();
+      const { data } = await supabase.from("hives").select("id")
+        .eq("number", String(num)).is("archived_at", null).maybeSingle();
       return data?.id ?? null;
     }
 
@@ -98,12 +99,16 @@ export function VoiceFab() {
         return;
       }
       case "add_hive": {
-        await supabase.from("hives").insert({
+        const { error } = await supabase.from("hives").insert({
           user_id: user_id!,
           number: String(f.number ?? "?"),
           breed: f.breed ?? null,
           notes: f.notes ?? null,
         } as any);
+        if (error) {
+          if ((error as any).code === "23505") return toast.error(`Вулик №${f.number} вже існує.`);
+          return toast.error(error.message);
+        }
         toast.success(`Додано вулик ${f.number}`);
         qc.invalidateQueries({ queryKey: ["hives"] });
         return;
