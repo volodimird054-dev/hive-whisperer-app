@@ -371,7 +371,7 @@ export function HiveCard({
           </div>
 
           <Button variant="destructive" onClick={del} className="w-full">
-            <Trash2 className="w-4 h-4 mr-2" /> Видалити {labelSingular.toLowerCase()}
+            <Trash2 className="w-4 h-4 mr-2" /> В архів
           </Button>
         </div>
 
