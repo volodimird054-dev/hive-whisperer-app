@@ -36,7 +36,7 @@ function StatsPage() {
     queryFn: async () => {
       const [points, hives, inspections, members] = await Promise.all([
         (supabase.from as any)("apiary_points").select("id, kind"),
-        supabase.from("hives").select("id, point_id"),
+        supabase.from("hives").select("id, point_id").is("archived_at", null),
         supabase.from("inspections").select("id, user_id, inspected_at"),
         (supabase.from as any)("apiary_members").select("user_id"),
       ]);

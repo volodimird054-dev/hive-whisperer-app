@@ -22,7 +22,7 @@ function HivesPage() {
   const { data: hives, isLoading } = useQuery({
     queryKey: ["hives"],
     queryFn: async () => {
-      const { data } = await supabase.from("hives").select("*");
+      const { data } = await supabase.from("hives").select("*").is("archived_at", null);
       return data ?? [];
     },
   });

@@ -49,7 +49,7 @@ function PointsPage() {
   const { data: counts } = useQuery({
     queryKey: ["points-counts"],
     queryFn: async () => {
-      const { data } = await (supabase.from("hives") as any).select("point_id");
+      const { data } = await (supabase.from("hives") as any).select("point_id").is("archived_at", null);
       const map: Record<string, number> = {};
       (data ?? []).forEach((h: any) => {
         if (h.point_id) map[h.point_id] = (map[h.point_id] ?? 0) + 1;

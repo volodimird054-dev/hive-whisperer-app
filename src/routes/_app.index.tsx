@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
-import { Home as HomeIcon, Boxes, Crown, CalendarDays, BarChart3 } from "lucide-react";
+import { Home as HomeIcon, Boxes, Crown, CalendarDays, BarChart3, Archive } from "lucide-react";
 
 export const Route = createFileRoute("/_app/")({
   component: HomePage,
@@ -12,6 +12,7 @@ const ITEMS = [
   { to: "/queens", title: "Виведення маток", desc: "Графік щеплень і виходу", icon: Crown, tone: "main-menu-card--queens" },
   { to: "/calendar", title: "Календар пасічника", desc: "Сезонні роботи", icon: CalendarDays, tone: "main-menu-card--calendar" },
   { to: "/stats", title: "Статистика", desc: "Аналітика пасіки", icon: BarChart3, tone: "main-menu-card--queens" },
+  { to: "/archive", title: "Архів", desc: "Архівовані вулики", icon: Archive, tone: "main-menu-card--apiary" },
 ] as const;
 
 function HomePage() {

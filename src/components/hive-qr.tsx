@@ -98,6 +98,17 @@ export function HiveQrButton({
     return () => clearTimeout(t);
   }, [open, hiveId, number]);
 
+  async function downloadPng() {
+    const composite = await renderLabelCanvas(hiveId, number, label);
+    const dataUrl = composite.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `hive-${number}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
   async function print() {
     const composite = await renderLabelCanvas(hiveId, number, label);
     const dataUrl = composite.toDataURL("image/png");
@@ -138,34 +149,52 @@ export function HiveQrButton({
         <QrCode className="w-4 h-4 mr-2" /> QR код
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent
+          className="p-4"
+          style={{ width: "min(90vw, 380px)", maxWidth: "min(90vw, 380px)", maxHeight: "90vh" }}
+        >
           <DialogHeader>
-            <DialogTitle>QR {label.toLowerCase()} №{number}</DialogTitle>
+            <DialogTitle>{label} №{number}</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col items-center gap-3">
-            {/* Завжди квадратний QR, обмежений максимальним розміром */}
+          <div className="flex items-center justify-center">
             <div
               className="bg-white rounded border p-3"
-              style={{ width: "min(80vw, 260px)", aspectRatio: "1 / 1" }}
+              style={{
+                width: "min(80vw, 260px)",
+                maxWidth: 260,
+                maxHeight: 260,
+                aspectRatio: "1 / 1",
+                margin: "0 auto",
+              }}
             >
               <canvas
                 ref={canvasRef}
                 width={QR_PX}
                 height={QR_PX}
-                style={{ width: "100%", height: "100%", imageRendering: "pixelated", display: "block" }}
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  aspectRatio: "1 / 1",
+                  display: "block",
+                  objectFit: "contain",
+                  imageRendering: "pixelated",
+                }}
               />
             </div>
-            <p className="text-xs text-muted-foreground text-center">
-              Наклейка 50×50 мм. QR стабільний для цього {label.toLowerCase()}а.
-            </p>
-            <div className="grid grid-cols-2 gap-2 w-full">
-              <Button onClick={print} disabled={!ready} variant="outline">
-                <Printer className="w-4 h-4 mr-2" /> Друк
-              </Button>
-              <Button onClick={downloadPdf} disabled={!ready}>
-                <FileDown className="w-4 h-4 mr-2" /> PDF
-              </Button>
-            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mt-3">
+            <Button onClick={downloadPng} disabled={!ready} variant="outline">
+              <FileDown className="w-4 h-4 mr-2" /> PNG
+            </Button>
+            <Button onClick={downloadPdf} disabled={!ready} variant="outline">
+              <FileDown className="w-4 h-4 mr-2" /> PDF
+            </Button>
+            <Button onClick={print} disabled={!ready} variant="outline">
+              <Printer className="w-4 h-4 mr-2" /> Друк
+            </Button>
+            <Button onClick={() => setOpen(false)}>
+              Закрити
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
