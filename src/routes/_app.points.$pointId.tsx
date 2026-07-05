@@ -44,7 +44,7 @@ function PointPage() {
     queryKey: ["point-hives", pointId],
     queryFn: async () => {
       const { data } = await (supabase.from("hives") as any)
-        .select("*").eq("point_id", pointId);
+        .select("*").eq("point_id", pointId).is("archived_at", null);
       return data ?? [];
     },
     enabled: !!point,
