@@ -150,22 +150,22 @@ export function HiveQrButton({
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className="p-4 gap-3 overflow-y-auto"
+          className="p-4 gap-3 overflow-hidden"
           style={{
-            width: "min(92vw, 360px)",
-            maxWidth: "min(92vw, 360px)",
+            width: "min(92vw, 340px)",
+            maxWidth: "min(92vw, 340px)",
             maxHeight: "90vh",
           }}
         >
           <DialogHeader>
             <DialogTitle className="pr-6 text-base">{label} №{number}</DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center overflow-hidden">
             <div
-              className="bg-white rounded border p-2"
+              className="bg-white rounded border p-2 overflow-hidden"
               style={{
-                width: "min(70vw, 220px)",
-                aspectRatio: "1 / 1",
+                width: "min(70vw, 55vh, 220px)",
+                height: "min(70vw, 55vh, 220px)",
               }}
             >
               <canvas
@@ -198,6 +198,7 @@ export function HiveQrButton({
           </div>
         </DialogContent>
       </Dialog>
+
 
     </>
   );
