@@ -150,21 +150,22 @@ export function HiveQrButton({
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className="p-4"
-          style={{ width: "min(90vw, 380px)", maxWidth: "min(90vw, 380px)", maxHeight: "90vh" }}
+          className="p-4 gap-3 overflow-y-auto"
+          style={{
+            width: "min(92vw, 360px)",
+            maxWidth: "min(92vw, 360px)",
+            maxHeight: "90vh",
+          }}
         >
           <DialogHeader>
-            <DialogTitle>{label} №{number}</DialogTitle>
+            <DialogTitle className="pr-6 text-base">{label} №{number}</DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center">
             <div
-              className="bg-white rounded border p-3"
+              className="bg-white rounded border p-2"
               style={{
-                width: "min(80vw, 260px)",
-                maxWidth: 260,
-                maxHeight: 260,
+                width: "min(70vw, 220px)",
                 aspectRatio: "1 / 1",
-                margin: "0 auto",
               }}
             >
               <canvas
@@ -173,8 +174,7 @@ export function HiveQrButton({
                 height={QR_PX}
                 style={{
                   width: "100%",
-                  height: "auto",
-                  aspectRatio: "1 / 1",
+                  height: "100%",
                   display: "block",
                   objectFit: "contain",
                   imageRendering: "pixelated",
@@ -182,22 +182,23 @@ export function HiveQrButton({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 mt-3">
-            <Button onClick={downloadPng} disabled={!ready} variant="outline">
+          <div className="grid grid-cols-2 gap-2">
+            <Button onClick={downloadPng} disabled={!ready} variant="outline" size="sm">
               <FileDown className="w-4 h-4 mr-2" /> PNG
             </Button>
-            <Button onClick={downloadPdf} disabled={!ready} variant="outline">
+            <Button onClick={downloadPdf} disabled={!ready} variant="outline" size="sm">
               <FileDown className="w-4 h-4 mr-2" /> PDF
             </Button>
-            <Button onClick={print} disabled={!ready} variant="outline">
+            <Button onClick={print} disabled={!ready} variant="outline" size="sm">
               <Printer className="w-4 h-4 mr-2" /> Друк
             </Button>
-            <Button onClick={() => setOpen(false)}>
+            <Button onClick={() => setOpen(false)} size="sm">
               Закрити
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
     </>
   );
 }
