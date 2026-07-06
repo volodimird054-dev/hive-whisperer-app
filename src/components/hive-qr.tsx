@@ -94,7 +94,7 @@ export function HiveQrButton({
     }
     const t = setTimeout(() => {
       if (canvasRef.current) {
-        renderHiveQrToCanvas(canvasRef.current, hiveId, number).then(() => setReady(true));
+          renderHiveQrToCanvas(canvasRef.current, hiveId, number, MODAL_QR_PX).then(() => setReady(true));
       }
     }, 30);
     return () => clearTimeout(t);
