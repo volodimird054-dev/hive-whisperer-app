@@ -6,16 +6,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { QrCode, Printer, FileDown } from "lucide-react";
 
 const QR_PX = 720;
+const MODAL_QR_PX = 184;
 
 // Малює QR + білий круг з номером посередині на canvas.
 export async function renderHiveQrToCanvas(
   canvas: HTMLCanvasElement,
   hiveId: string,
   number: string | number,
+  pixelSize = QR_PX,
 ) {
   const url = `${window.location.origin}/h/${hiveId}`;
   await QRCode.toCanvas(canvas, url, {
-    width: QR_PX,
+    width: pixelSize,
     margin: 2,
     errorCorrectionLevel: "H", // дозволяє «закрити» центр без втрати читаності
     color: { dark: "#1a1206", light: "#ffffff" },
@@ -92,7 +94,7 @@ export function HiveQrButton({
     }
     const t = setTimeout(() => {
       if (canvasRef.current) {
-        renderHiveQrToCanvas(canvasRef.current, hiveId, number).then(() => setReady(true));
+          renderHiveQrToCanvas(canvasRef.current, hiveId, number, MODAL_QR_PX).then(() => setReady(true));
       }
     }, 30);
     return () => clearTimeout(t);
@@ -152,8 +154,8 @@ export function HiveQrButton({
         <DialogContent
           className="p-4 gap-3 overflow-hidden"
           style={{
-            width: "min(92vw, 340px)",
-            maxWidth: "min(92vw, 340px)",
+            width: "min(90vw, 320px)",
+            maxWidth: "min(90vw, 320px)",
             maxHeight: "90vh",
           }}
         >
@@ -162,22 +164,20 @@ export function HiveQrButton({
           </DialogHeader>
           <div className="flex items-center justify-center overflow-hidden">
             <div
-              className="bg-white rounded border p-2 overflow-hidden"
+              className="bg-white rounded border p-2 overflow-hidden flex-none"
               style={{
-                width: "min(70vw, 55vh, 220px)",
-                height: "min(70vw, 55vh, 220px)",
+                width: MODAL_QR_PX + 16,
+                height: MODAL_QR_PX + 16,
               }}
             >
               <canvas
                 ref={canvasRef}
-                width={QR_PX}
-                height={QR_PX}
+                width={MODAL_QR_PX}
+                height={MODAL_QR_PX}
                 style={{
-                  width: "100%",
-                  height: "100%",
+                  width: MODAL_QR_PX,
+                  height: MODAL_QR_PX,
                   display: "block",
-                  objectFit: "contain",
-                  imageRendering: "pixelated",
                 }}
               />
             </div>
