@@ -52,14 +52,14 @@ export async function renderHiveQrToCanvas(
 // весь лейбл (QR + текст) малюємо як одну картинку — так підпис завжди
 // відображається правильно і у екрані, і у PDF, і у друці.
 async function renderLabelCanvas(
-  hiveId: string,
+  qrUuid: string,
   number: string | number,
   label: string,
 ): Promise<HTMLCanvasElement> {
   const qr = document.createElement("canvas");
   qr.width = QR_PX;
   qr.height = QR_PX;
-  await renderHiveQrToCanvas(qr, hiveId, number);
+  await renderHiveQrToCanvas(qr, qrUuid, number);
 
   const captionH = Math.floor(QR_PX * 0.14);
   const canvas = document.createElement("canvas");
@@ -79,13 +79,18 @@ async function renderLabelCanvas(
 
 export function HiveQrButton({
   hiveId,
+  qrUuid,
   number,
   label = "Вулик",
 }: {
-  hiveId: string;
+  hiveId?: string;
+  qrUuid: string;
   number: string | number;
   label?: string;
 }) {
+  // hiveId параметр залишено для зворотної сумісності, але не використовується.
+  void hiveId;
+
   const [open, setOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [ready, setReady] = useState(false);
