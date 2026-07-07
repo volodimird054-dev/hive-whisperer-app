@@ -102,14 +102,14 @@ export function HiveQrButton({
     }
     const t = setTimeout(() => {
       if (canvasRef.current) {
-          renderHiveQrToCanvas(canvasRef.current, hiveId, number, MODAL_QR_PX).then(() => setReady(true));
+          renderHiveQrToCanvas(canvasRef.current, qrUuid, number, MODAL_QR_PX).then(() => setReady(true));
       }
     }, 30);
     return () => clearTimeout(t);
-  }, [open, hiveId, number]);
+  }, [open, qrUuid, number]);
 
   async function downloadPng() {
-    const composite = await renderLabelCanvas(hiveId, number, label);
+    const composite = await renderLabelCanvas(qrUuid, number, label);
     const dataUrl = composite.toDataURL("image/png");
     const a = document.createElement("a");
     a.href = dataUrl;
@@ -120,7 +120,7 @@ export function HiveQrButton({
   }
 
   async function print() {
-    const composite = await renderLabelCanvas(hiveId, number, label);
+    const composite = await renderLabelCanvas(qrUuid, number, label);
     const dataUrl = composite.toDataURL("image/png");
     const w = window.open("", "_blank", "width=400,height=520");
     if (!w) return;
@@ -137,7 +137,7 @@ export function HiveQrButton({
   }
 
   async function downloadPdf() {
-    const composite = await renderLabelCanvas(hiveId, number, label);
+    const composite = await renderLabelCanvas(qrUuid, number, label);
     const dataUrl = composite.toDataURL("image/png");
     const labelW = 55;
     const labelH = 62;
