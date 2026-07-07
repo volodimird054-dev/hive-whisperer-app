@@ -161,7 +161,7 @@ function PointPage() {
     if (!sel.length) return toast.error("Виберіть хоча б один");
     setPdfBusy(true);
     try {
-      await generateHivesPdf(sel.map((h: any) => ({ id: h.id, number: h.number })), label);
+      await generateHivesPdf(sel.map((h: any) => ({ qrUuid: h.qr_uuid, number: h.number })), label);
       setPrintOpen(false);
     } finally {
       setPdfBusy(false);
