@@ -217,7 +217,7 @@ export function HiveQrButton({
  * на QR-зображенні через canvas — тому кирилиця в PDF відображається правильно.
  */
 export async function generateHivesPdf(
-  hives: Array<{ id: string; number: string | number }>,
+  hives: Array<{ qrUuid: string; number: string | number }>,
   label = "Вулик",
 ) {
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
@@ -239,7 +239,8 @@ export async function generateHivesPdf(
     const c = idxOnPage % cols;
     const x0 = marginX + c * cellW;
     const y0 = marginY + r * cellH;
-    const composite = await renderLabelCanvas(hives[i].id, hives[i].number, label);
+    const composite = await renderLabelCanvas(hives[i].qrUuid, hives[i].number, label);
+
     const dataUrl = composite.toDataURL("image/png");
     const imgH = imgSize * (composite.height / composite.width);
     const imgX = x0 + (cellW - imgSize) / 2;
