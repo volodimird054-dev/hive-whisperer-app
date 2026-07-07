@@ -9,13 +9,16 @@ const QR_PX = 720;
 const MODAL_QR_PX = 184;
 
 // Малює QR + білий круг з номером посередині на canvas.
+// ВАЖЛИВО: qrUuid — постійний ідентифікатор вулика, який зберігається у БД
+// і НІКОЛИ не змінюється після створення вулика.
 export async function renderHiveQrToCanvas(
   canvas: HTMLCanvasElement,
-  hiveId: string,
+  qrUuid: string,
   number: string | number,
   pixelSize = QR_PX,
 ) {
-  const url = `${window.location.origin}/h/${hiveId}`;
+  const url = `${window.location.origin}/h/${qrUuid}`;
+
   await QRCode.toCanvas(canvas, url, {
     width: pixelSize,
     margin: 2,
