@@ -350,7 +350,7 @@ export function HiveCard({
             </Button>
           </div>
 
-          <HiveQrButton hiveId={hive.id} number={hive.number} label={labelSingular} />
+          <HiveQrButton qrUuid={hive.qr_uuid} number={hive.number} label={labelSingular} />
 
           <div>
             <h3 className="font-semibold mb-2">Журнал оглядів</h3>

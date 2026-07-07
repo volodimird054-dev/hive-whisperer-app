@@ -9,13 +9,16 @@ const QR_PX = 720;
 const MODAL_QR_PX = 184;
 
 // Малює QR + білий круг з номером посередині на canvas.
+// ВАЖЛИВО: qrUuid — постійний ідентифікатор вулика, який зберігається у БД
+// і НІКОЛИ не змінюється після створення вулика.
 export async function renderHiveQrToCanvas(
   canvas: HTMLCanvasElement,
-  hiveId: string,
+  qrUuid: string,
   number: string | number,
   pixelSize = QR_PX,
 ) {
-  const url = `${window.location.origin}/h/${hiveId}`;
+  const url = `${window.location.origin}/h/${qrUuid}`;
+
   await QRCode.toCanvas(canvas, url, {
     width: pixelSize,
     margin: 2,
@@ -49,14 +52,14 @@ export async function renderHiveQrToCanvas(
 // весь лейбл (QR + текст) малюємо як одну картинку — так підпис завжди
 // відображається правильно і у екрані, і у PDF, і у друці.
 async function renderLabelCanvas(
-  hiveId: string,
+  qrUuid: string,
   number: string | number,
   label: string,
 ): Promise<HTMLCanvasElement> {
   const qr = document.createElement("canvas");
   qr.width = QR_PX;
   qr.height = QR_PX;
-  await renderHiveQrToCanvas(qr, hiveId, number);
+  await renderHiveQrToCanvas(qr, qrUuid, number);
 
   const captionH = Math.floor(QR_PX * 0.14);
   const canvas = document.createElement("canvas");
@@ -76,13 +79,18 @@ async function renderLabelCanvas(
 
 export function HiveQrButton({
   hiveId,
+  qrUuid,
   number,
   label = "Вулик",
 }: {
-  hiveId: string;
+  hiveId?: string;
+  qrUuid: string;
   number: string | number;
   label?: string;
 }) {
+  // hiveId параметр залишено для зворотної сумісності, але не використовується.
+  void hiveId;
+
   const [open, setOpen] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [ready, setReady] = useState(false);
@@ -94,14 +102,14 @@ export function HiveQrButton({
     }
     const t = setTimeout(() => {
       if (canvasRef.current) {
-          renderHiveQrToCanvas(canvasRef.current, hiveId, number, MODAL_QR_PX).then(() => setReady(true));
+          renderHiveQrToCanvas(canvasRef.current, qrUuid, number, MODAL_QR_PX).then(() => setReady(true));
       }
     }, 30);
     return () => clearTimeout(t);
-  }, [open, hiveId, number]);
+  }, [open, qrUuid, number]);
 
   async function downloadPng() {
-    const composite = await renderLabelCanvas(hiveId, number, label);
+    const composite = await renderLabelCanvas(qrUuid, number, label);
     const dataUrl = composite.toDataURL("image/png");
     const a = document.createElement("a");
     a.href = dataUrl;
@@ -112,7 +120,7 @@ export function HiveQrButton({
   }
 
   async function print() {
-    const composite = await renderLabelCanvas(hiveId, number, label);
+    const composite = await renderLabelCanvas(qrUuid, number, label);
     const dataUrl = composite.toDataURL("image/png");
     const w = window.open("", "_blank", "width=400,height=520");
     if (!w) return;
@@ -129,7 +137,7 @@ export function HiveQrButton({
   }
 
   async function downloadPdf() {
-    const composite = await renderLabelCanvas(hiveId, number, label);
+    const composite = await renderLabelCanvas(qrUuid, number, label);
     const dataUrl = composite.toDataURL("image/png");
     const labelW = 55;
     const labelH = 62;
@@ -209,7 +217,7 @@ export function HiveQrButton({
  * на QR-зображенні через canvas — тому кирилиця в PDF відображається правильно.
  */
 export async function generateHivesPdf(
-  hives: Array<{ id: string; number: string | number }>,
+  hives: Array<{ qrUuid: string; number: string | number }>,
   label = "Вулик",
 ) {
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
@@ -231,7 +239,8 @@ export async function generateHivesPdf(
     const c = idxOnPage % cols;
     const x0 = marginX + c * cellW;
     const y0 = marginY + r * cellH;
-    const composite = await renderLabelCanvas(hives[i].id, hives[i].number, label);
+    const composite = await renderLabelCanvas(hives[i].qrUuid, hives[i].number, label);
+
     const dataUrl = composite.toDataURL("image/png");
     const imgH = imgSize * (composite.height / composite.width);
     const imgX = x0 + (cellW - imgSize) / 2;

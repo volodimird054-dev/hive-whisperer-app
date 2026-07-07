@@ -132,32 +132,44 @@ export type Database = {
       calendar_events: {
         Row: {
           category: string | null
+          color: string | null
           created_at: string
           description: string | null
           done: boolean
           event_date: string
           id: string
+          remind_at: string | null
+          seasonal_task_id: string | null
           title: string
+          updated_at: string
           user_id: string
         }
         Insert: {
           category?: string | null
+          color?: string | null
           created_at?: string
           description?: string | null
           done?: boolean
           event_date: string
           id?: string
+          remind_at?: string | null
+          seasonal_task_id?: string | null
           title: string
+          updated_at?: string
           user_id: string
         }
         Update: {
           category?: string | null
+          color?: string | null
           created_at?: string
           description?: string | null
           done?: boolean
           event_date?: string
           id?: string
+          remind_at?: string | null
+          seasonal_task_id?: string | null
           title?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -279,6 +291,7 @@ export type Database = {
           number: string
           photo_url: string | null
           point_id: string | null
+          qr_uuid: string
           queen_mark: string | null
           queen_year: number | null
           status: string | null
@@ -299,6 +312,7 @@ export type Database = {
           number: string
           photo_url?: string | null
           point_id?: string | null
+          qr_uuid?: string
           queen_mark?: string | null
           queen_year?: number | null
           status?: string | null
@@ -319,6 +333,7 @@ export type Database = {
           number?: string
           photo_url?: string | null
           point_id?: string | null
+          qr_uuid?: string
           queen_mark?: string | null
           queen_year?: number | null
           status?: string | null
@@ -512,6 +527,88 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      seasonal_tasks: {
+        Row: {
+          apiary_id: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          done: boolean
+          hive_id: string | null
+          id: string
+          month: string | null
+          notes: string | null
+          point_id: string | null
+          priority: string
+          season: string
+          sort_order: number
+          target_date: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          apiary_id?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          done?: boolean
+          hive_id?: string | null
+          id?: string
+          month?: string | null
+          notes?: string | null
+          point_id?: string | null
+          priority?: string
+          season?: string
+          sort_order?: number
+          target_date?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          apiary_id?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          done?: boolean
+          hive_id?: string | null
+          id?: string
+          month?: string | null
+          notes?: string | null
+          point_id?: string | null
+          priority?: string
+          season?: string
+          sort_order?: number
+          target_date?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seasonal_tasks_apiary_id_fkey"
+            columns: ["apiary_id"]
+            isOneToOne: false
+            referencedRelation: "apiaries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seasonal_tasks_hive_id_fkey"
+            columns: ["hive_id"]
+            isOneToOne: false
+            referencedRelation: "hives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seasonal_tasks_point_id_fkey"
+            columns: ["point_id"]
+            isOneToOne: false
+            referencedRelation: "apiary_points"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       treatments: {
         Row: {
