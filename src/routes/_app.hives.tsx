@@ -105,7 +105,7 @@ function HivesPage() {
       ) : visible.length > 0 ? (
         <div className="space-y-2">
           {visible.map(h => (
-            <HiveCard key={h.id} hive={h} forceOpen={scannedId === h.id} onChange={() => qc.invalidateQueries({ queryKey: ["hives"] })} />
+            <HiveCard key={h.id} hive={h} forceOpen={scannedId === h.id || scannedId === h.qr_uuid} onChange={() => qc.invalidateQueries({ queryKey: ["hives"] })} />
           ))}
         </div>
       ) : hives?.length ? (

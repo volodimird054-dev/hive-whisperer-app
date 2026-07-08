@@ -23,6 +23,7 @@ import { Route as AppArchiveRouteImport } from './routes/_app.archive'
 import { Route as AppApiaryRouteImport } from './routes/_app.apiary'
 import { Route as AppPointsIndexRouteImport } from './routes/_app.points.index'
 import { Route as AppPointsPointIdRouteImport } from './routes/_app.points.$pointId'
+import { Route as AppHQrUuidRouteImport } from './routes/_app.h.$qrUuid'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -93,6 +94,11 @@ const AppPointsPointIdRoute = AppPointsPointIdRouteImport.update({
   path: '/$pointId',
   getParentRoute: () => AppPointsRoute,
 } as any)
+const AppHQrUuidRoute = AppHQrUuidRouteImport.update({
+  id: '/h/$qrUuid',
+  path: '/h/$qrUuid',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/points': typeof AppPointsRouteWithChildren
   '/queens': typeof AppQueensRoute
   '/stats': typeof AppStatsRoute
+  '/h/$qrUuid': typeof AppHQrUuidRoute
   '/points/$pointId': typeof AppPointsPointIdRoute
   '/points/': typeof AppPointsIndexRoute
 }
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/queens': typeof AppQueensRoute
   '/stats': typeof AppStatsRoute
   '/': typeof AppIndexRoute
+  '/h/$qrUuid': typeof AppHQrUuidRoute
   '/points/$pointId': typeof AppPointsPointIdRoute
   '/points': typeof AppPointsIndexRoute
 }
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/_app/queens': typeof AppQueensRoute
   '/_app/stats': typeof AppStatsRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/h/$qrUuid': typeof AppHQrUuidRoute
   '/_app/points/$pointId': typeof AppPointsPointIdRoute
   '/_app/points/': typeof AppPointsIndexRoute
 }
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/points'
     | '/queens'
     | '/stats'
+    | '/h/$qrUuid'
     | '/points/$pointId'
     | '/points/'
   fileRoutesByTo: FileRoutesByTo
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/queens'
     | '/stats'
     | '/'
+    | '/h/$qrUuid'
     | '/points/$pointId'
     | '/points'
   id:
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/_app/queens'
     | '/_app/stats'
     | '/_app/'
+    | '/_app/h/$qrUuid'
     | '/_app/points/$pointId'
     | '/_app/points/'
   fileRoutesById: FileRoutesById
@@ -293,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPointsPointIdRouteImport
       parentRoute: typeof AppPointsRoute
     }
+    '/_app/h/$qrUuid': {
+      id: '/_app/h/$qrUuid'
+      path: '/h/$qrUuid'
+      fullPath: '/h/$qrUuid'
+      preLoaderRoute: typeof AppHQrUuidRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -321,6 +340,7 @@ interface AppRouteChildren {
   AppQueensRoute: typeof AppQueensRoute
   AppStatsRoute: typeof AppStatsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppHQrUuidRoute: typeof AppHQrUuidRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -334,6 +354,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppQueensRoute: AppQueensRoute,
   AppStatsRoute: AppStatsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppHQrUuidRoute: AppHQrUuidRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
