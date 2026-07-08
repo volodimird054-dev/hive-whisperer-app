@@ -172,7 +172,7 @@ export function VoiceFab() {
       <HiveScannerDialog
         open={scanOpen}
         onOpenChange={setScanOpen}
-        onScan={(id) => { window.location.href = `/hives?scan=${id}`; }}
+        onScan={(id) => { window.location.href = `/h/${id}`; }}
       />
 
       <Dialog open={open} onOpenChange={(v) => { if (!listening) setOpen(v); else if (!v) { stop(); setOpen(false); } }}>
