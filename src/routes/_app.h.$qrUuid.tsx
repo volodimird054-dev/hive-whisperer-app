@@ -47,9 +47,9 @@ function HiveQrPage() {
 
   return (
     <div className="space-y-4">
-      <Link to={archived ? "/archive" : "/hives"} search={archived ? undefined : { scan: hive.id }} className="inline-flex items-center text-sm text-muted-foreground">
+      <a href={archived ? "/archive" : `/hives?scan=${hive.id}`} className="inline-flex items-center text-sm text-muted-foreground">
         <ArrowLeft className="w-4 h-4 mr-1" /> {archived ? "До архіву" : "До списку вуликів"}
-      </Link>
+      </a>
 
       <Card className="p-4 space-y-4">
         <div className="flex items-start gap-3">
@@ -80,7 +80,7 @@ function HiveQrPage() {
 
         {!archived && (
           <Button asChild className="w-full">
-            <Link to="/hives" search={{ scan: hive.id }}>Відкрити в списку</Link>
+            <a href={`/hives?scan=${hive.id}`}>Відкрити в списку</a>
           </Button>
         )}
       </Card>
