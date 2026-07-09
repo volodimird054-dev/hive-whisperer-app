@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Plus, Loader2, MapPin, Boxes, Egg, Crosshair } from "lucide-react";
+import { PointPhoto } from "@/components/point-photo";
 
 export const Route = createFileRoute("/_app/points/")({
   component: PointsPage,
@@ -25,6 +26,8 @@ type Point = {
   lat: number | null;
   lng: number | null;
   notes: string | null;
+  photo_path?: string | null;
+  status?: string | null;
 };
 
 function PointsPage() {
@@ -108,7 +111,7 @@ function PointsPage() {
       address: address || null,
       lat: lat ? Number(lat) : null,
       lng: lng ? Number(lng) : null,
-      location: address || (hasGps ? `${lat},${lng}` : null), // зворотна сумісність
+      location: address || (hasGps ? `${lat},${lng}` : null),
       notes: notes || null,
     });
     setSaving(false);
@@ -164,6 +167,7 @@ function PointsPage() {
               <Button onClick={add} disabled={!name || saving} className="w-full">
                 {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Створити
               </Button>
+              <p className="text-xs text-muted-foreground text-center">Додаткові поля (фото, кочівля, погода) — у налаштуваннях точка після створення.</p>
             </div>
           </DialogContent>
         </Dialog>
@@ -180,18 +184,26 @@ function PointsPage() {
               <Link key={p.id} to="/points/$pointId" params={{ pointId: p.id }}>
                 <Card className="p-4 hover:bg-accent/40 cursor-pointer h-full">
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-honey/30 flex items-center justify-center">
-                      <Icon className="w-6 h-6" />
+                    <div className="w-14 h-14 rounded-xl bg-honey/30 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {p.photo_path ? (
+                        <PointPhoto path={p.photo_path} className="w-full h-full object-cover" />
+                      ) : (
+                        <Icon className="w-6 h-6" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold truncate">{p.name}</div>
+                      <div className="font-semibold truncate flex items-center gap-2">
+                        {p.name}
+                        {p.status === "inactive" && <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">неактивний</span>}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {p.kind === "nuclei" ? "Нуклеусний парк" : "Точок вуликів"}
                         {" · "}{counts?.[p.id] ?? 0} шт
                       </div>
                       {loc && (
                         <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                          <MapPin className="w-3 h-3" />{loc}
+                          <MapPin className="w-3 h-3" />
+                          <span className="truncate">{loc}</span>
                         </div>
                       )}
                     </div>
