@@ -18,10 +18,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Loader2, ArrowLeft, Trash2, FileDown, MapPin, MoreVertical, Search } from "lucide-react";
+import {
+  Plus, Loader2, ArrowLeft, Trash2, FileDown, MapPin, MoreVertical, Search,
+  Pencil, Map as MapIcon, Navigation, Phone, Droplets, Zap, Shield, Car, Calendar, User, Leaf,
+} from "lucide-react";
 import { HiveCard } from "@/components/hive-card";
 import { generateHivesPdf } from "@/components/hive-qr";
 import { sortHives, filterHives } from "@/lib/hive-sort";
+import { PointEditDialog } from "@/components/point-edit-dialog";
+import { PointPhoto } from "@/components/point-photo";
+import { PointWeather } from "@/components/point-weather";
 
 export const Route = createFileRoute("/_app/points/$pointId")({
   component: PointPage,
@@ -50,6 +56,16 @@ function PointPage() {
     enabled: !!point,
   });
 
+  const { data: history } = useQuery({
+    queryKey: ["point-history", pointId],
+    queryFn: async () => {
+      const { data } = await (supabase.from as any)("apiary_point_locations")
+        .select("*").eq("point_id", pointId).order("moved_at", { ascending: false });
+      return data ?? [];
+    },
+    enabled: !!point,
+  });
+
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState("single");
   const [number, setNumber] = useState("");
@@ -65,6 +81,8 @@ function PointPage() {
   const [pdfBusy, setPdfBusy] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [query, setQuery] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const isNuclei = point?.kind === "nuclei";
   const label = isNuclei ? "Нуклеус" : "Вулик";
@@ -77,7 +95,6 @@ function PointPage() {
     const { data: u } = await supabase.auth.getUser();
     const user_id = u.user!.id;
 
-    // Всі активні номери в цьому точку — для перевірки дублікатів
     const { data: existingRows } = await (supabase.from("hives") as any)
       .select("number").eq("point_id", pointId).is("archived_at", null);
     const existing = new Set<string>((existingRows ?? []).map((r: any) => String(r.number)));
@@ -173,16 +190,30 @@ function PointPage() {
 
   const title = isNuclei ? "Нуклеуси" : "Вулики";
   const loc = point.address || (point.lat && point.lng ? `${point.lat}, ${point.lng}` : point.location);
+  const hasCoords = point.lat != null && point.lng != null;
+  const mapsQuery = hasCoords ? `${point.lat},${point.lng}` : encodeURIComponent(point.address ?? "");
 
   return (
-    <div>
-      <Link to="/points" className="inline-flex items-center text-sm text-muted-foreground mb-3">
+    <div className="space-y-4">
+      <Link to="/points" className="inline-flex items-center text-sm text-muted-foreground">
         <ArrowLeft className="w-4 h-4 mr-1" /> До списку точок
       </Link>
 
-      <div className="flex items-start justify-between gap-2 mb-3">
+      {/* Photo banner */}
+      {point.photo_path && (
+        <div className="rounded-xl overflow-hidden bg-muted aspect-[16/9]">
+          <PointPhoto path={point.photo_path} className="w-full h-full object-cover" />
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold">{point.name}</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-2xl font-bold">{point.name}</h1>
+            {point.status === "inactive" && <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">неактивний</span>}
+            {point.stationary === false && <span className="text-[10px] px-1.5 py-0.5 rounded bg-honey/40">кочовий</span>}
+          </div>
           <p className="text-sm text-muted-foreground">
             {isNuclei ? "Нуклеусний парк" : "Точок вуликів"}
           </p>
@@ -193,6 +224,116 @@ function PointPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
+            <Pencil className="w-4 h-4 mr-1" /> Редагувати
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" aria-label="Меню точка">
+                <MoreVertical className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                disabled={!sortedHives.length}
+                onClick={() => { selectAll(); setPrintOpen(true); }}
+              >
+                <FileDown className="w-4 h-4 mr-2" /> Друк QR
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setConfirmDel(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-2" /> Видалити точок
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Map buttons */}
+      {(hasCoords || point.address) && (
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <a href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`} target="_blank" rel="noreferrer">
+              <MapIcon className="w-4 h-4 mr-1" /> На карті
+            </a>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <a href={`https://www.google.com/maps/dir/?api=1&destination=${mapsQuery}`} target="_blank" rel="noreferrer">
+              <Navigation className="w-4 h-4 mr-1" /> Маршрут
+            </a>
+          </Button>
+        </div>
+      )}
+
+      {/* Info card */}
+      {(point.description || point.honey_base || point.water_source || point.land_owner || point.owner_phone ||
+        point.installed_at || point.removed_at || point.car_access != null || point.has_electricity != null ||
+        point.has_security != null || point.hives_count_manual != null) && (
+        <Card className="p-4 space-y-2 text-sm">
+          {point.description && <p className="text-muted-foreground">{point.description}</p>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
+            {point.honey_base && <InfoRow icon={<Leaf className="w-4 h-4" />} label="Медоносна база" value={point.honey_base} />}
+            {point.hives_count_manual != null && <InfoRow icon={<span className="text-xs">🐝</span>} label="Заявлена к-ть" value={`${point.hives_count_manual} шт`} />}
+            {point.water_source && <InfoRow icon={<Droplets className="w-4 h-4" />} label="Вода" value={point.water_source} />}
+            {point.car_access != null && <InfoRow icon={<Car className="w-4 h-4" />} label="Під'їзд авто" value={point.car_access ? "так" : "ні"} />}
+            {point.has_electricity != null && <InfoRow icon={<Zap className="w-4 h-4" />} label="Електрика" value={point.has_electricity ? "так" : "ні"} />}
+            {point.has_security != null && <InfoRow icon={<Shield className="w-4 h-4" />} label="Охорона" value={point.has_security ? "так" : "ні"} />}
+            {point.land_owner && <InfoRow icon={<User className="w-4 h-4" />} label="Власник" value={point.land_owner} />}
+            {point.owner_phone && (
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground"><Phone className="w-4 h-4" /></span>
+                <div className="min-w-0">
+                  <div className="text-[11px] text-muted-foreground leading-none">Телефон</div>
+                  <a className="font-medium hover:underline" href={`tel:${point.owner_phone}`}>{point.owner_phone}</a>
+                </div>
+              </div>
+            )}
+            {point.installed_at && <InfoRow icon={<Calendar className="w-4 h-4" />} label="Встановлено" value={new Date(point.installed_at).toLocaleDateString("uk-UA")} />}
+            {point.removed_at && <InfoRow icon={<Calendar className="w-4 h-4" />} label="Вивезено" value={new Date(point.removed_at).toLocaleDateString("uk-UA")} />}
+          </div>
+          {point.notes && <p className="text-xs text-muted-foreground border-t pt-2 mt-2 whitespace-pre-wrap">{point.notes}</p>}
+        </Card>
+      )}
+
+      {/* Weather */}
+      {hasCoords ? (
+        <PointWeather lat={point.lat} lng={point.lng} pointId={point.id} />
+      ) : (
+        <Card className="p-4 text-sm text-muted-foreground">
+          Додайте GPS-координати, щоб бачити погоду й пасічницький прогноз для цього точка.
+        </Card>
+      )}
+
+      {/* Migration history */}
+      {history && history.length > 1 && (
+        <Card className="p-3">
+          <button
+            className="w-full flex items-center justify-between text-sm font-semibold"
+            onClick={() => setHistoryOpen(v => !v)}
+          >
+            <span>Історія кочівель ({history.length})</span>
+            <span className="text-muted-foreground text-xs">{historyOpen ? "згорнути" : "показати"}</span>
+          </button>
+          {historyOpen && (
+            <ul className="mt-2 space-y-2 text-sm">
+              {history.map((h: any) => (
+                <li key={h.id} className="border-l-2 border-honey pl-3">
+                  <div className="text-xs text-muted-foreground">{new Date(h.moved_at).toLocaleString("uk-UA")}</div>
+                  <div>{h.address || (h.lat && h.lng ? `${h.lat}, ${h.lng}` : "—")}</div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      )}
+
+      {/* Hives list */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{title}</h2>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="w-4 h-4 mr-1" /> Додати</Button>
@@ -227,66 +368,53 @@ function PointPage() {
               </div>
             </DialogContent>
           </Dialog>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost" aria-label="Меню точка">
-                <MoreVertical className="w-5 h-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                disabled={!sortedHives.length}
-                onClick={() => { selectAll(); setPrintOpen(true); }}
-              >
-                <FileDown className="w-4 h-4 mr-2" /> Друк QR
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => setConfirmDel(true)}
-              >
-                <Trash2 className="w-4 h-4 mr-2" /> Видалити точок
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
+
+        <div className="relative mb-3">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Пошук за номером, породою, роком матки…"
+            className="pl-9"
+          />
+        </div>
+
+        {visibleHives.length > 0 ? (
+          <div className="space-y-2">
+            {visibleHives.map((h: any) => (
+              <HiveCard
+                key={h.id}
+                hive={h}
+                kind={isNuclei ? "nucleus" : "hive"}
+                onChange={() => {
+                  qc.invalidateQueries({ queryKey: ["point-hives", pointId] });
+                  qc.invalidateQueries({ queryKey: ["hives"] });
+                }}
+              />
+            ))}
+          </div>
+        ) : sortedHives.length ? (
+          <Card className="p-6 text-center text-sm text-muted-foreground">
+            Нічого не знайдено за запитом «{query}».
+          </Card>
+        ) : (
+          <Card className="p-6 text-center text-sm text-muted-foreground">
+            Тут поки нічого немає. Додайте перший {label.toLowerCase()}.
+          </Card>
+        )}
       </div>
 
-      <div className="relative mb-3">
-        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Пошук за номером, породою, роком матки…"
-          className="pl-9"
-        />
-      </div>
-
-      <h2 className="text-sm font-semibold text-muted-foreground mt-2 mb-2 uppercase tracking-wide">{title}</h2>
-      {visibleHives.length > 0 ? (
-        <div className="space-y-2">
-          {visibleHives.map((h: any) => (
-            <HiveCard
-              key={h.id}
-              hive={h}
-              kind={isNuclei ? "nucleus" : "hive"}
-              onChange={() => {
-                qc.invalidateQueries({ queryKey: ["point-hives", pointId] });
-                qc.invalidateQueries({ queryKey: ["hives"] });
-              }}
-            />
-          ))}
-        </div>
-      ) : sortedHives.length ? (
-        <Card className="p-6 text-center text-sm text-muted-foreground">
-          Нічого не знайдено за запитом «{query}».
-        </Card>
-      ) : (
-        <Card className="p-6 text-center text-sm text-muted-foreground">
-          Тут поки нічого немає. Додайте перший {label.toLowerCase()}.
-        </Card>
-      )}
+      <PointEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        point={point}
+        onSaved={() => {
+          qc.invalidateQueries({ queryKey: ["point", pointId] });
+          qc.invalidateQueries({ queryKey: ["points"] });
+          qc.invalidateQueries({ queryKey: ["point-history", pointId] });
+        }}
+      />
 
       <AlertDialog open={confirmDel} onOpenChange={setConfirmDel}>
         <AlertDialogContent>
@@ -347,6 +475,18 @@ function PointPage() {
           </p>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-muted-foreground">{icon}</span>
+      <div className="min-w-0">
+        <div className="text-[11px] text-muted-foreground leading-none">{label}</div>
+        <div className="font-medium truncate">{value}</div>
+      </div>
     </div>
   );
 }

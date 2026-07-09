@@ -79,45 +79,128 @@ export type Database = {
           },
         ]
       }
+      apiary_point_locations: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          lat: number | null
+          lng: number | null
+          moved_at: string
+          notes: string | null
+          point_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          moved_at?: string
+          notes?: string | null
+          point_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          moved_at?: string
+          notes?: string | null
+          point_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apiary_point_locations_point_id_fkey"
+            columns: ["point_id"]
+            isOneToOne: false
+            referencedRelation: "apiary_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apiary_points: {
         Row: {
           address: string | null
           apiary_id: string
+          car_access: boolean | null
           created_at: string
+          description: string | null
+          has_electricity: boolean | null
+          has_security: boolean | null
+          hives_count_manual: number | null
+          honey_base: string | null
           id: string
+          installed_at: string | null
           kind: Database["public"]["Enums"]["point_kind"]
+          land_owner: string | null
           lat: number | null
           lng: number | null
           location: string | null
           name: string
           notes: string | null
+          owner_phone: string | null
+          photo_path: string | null
+          removed_at: string | null
+          stationary: boolean
+          status: string
           updated_at: string
+          water_source: string | null
         }
         Insert: {
           address?: string | null
           apiary_id: string
+          car_access?: boolean | null
           created_at?: string
+          description?: string | null
+          has_electricity?: boolean | null
+          has_security?: boolean | null
+          hives_count_manual?: number | null
+          honey_base?: string | null
           id?: string
+          installed_at?: string | null
           kind?: Database["public"]["Enums"]["point_kind"]
+          land_owner?: string | null
           lat?: number | null
           lng?: number | null
           location?: string | null
           name: string
           notes?: string | null
+          owner_phone?: string | null
+          photo_path?: string | null
+          removed_at?: string | null
+          stationary?: boolean
+          status?: string
           updated_at?: string
+          water_source?: string | null
         }
         Update: {
           address?: string | null
           apiary_id?: string
+          car_access?: boolean | null
           created_at?: string
+          description?: string | null
+          has_electricity?: boolean | null
+          has_security?: boolean | null
+          hives_count_manual?: number | null
+          honey_base?: string | null
           id?: string
+          installed_at?: string | null
           kind?: Database["public"]["Enums"]["point_kind"]
+          land_owner?: string | null
           lat?: number | null
           lng?: number | null
           location?: string | null
           name?: string
           notes?: string | null
+          owner_phone?: string | null
+          photo_path?: string | null
+          removed_at?: string | null
+          stationary?: boolean
+          status?: string
           updated_at?: string
+          water_source?: string | null
         }
         Relationships: [
           {
