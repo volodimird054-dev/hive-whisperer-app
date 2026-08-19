@@ -57,18 +57,32 @@ export function PointEditDialog({ open, onOpenChange, point, onSaved }: Props) {
 
   function useMyLocation() {
     if (!navigator.geolocation) return toast.error("Браузер не підтримує геолокацію");
+    if (!window.isSecureContext) return toast.error("Геолокація доступна лише через HTTPS");
     setGpsBusy(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        up("lat", Number(pos.coords.latitude.toFixed(6)));
-        up("lng", Number(pos.coords.longitude.toFixed(6)));
+        setF(prev => ({
+          ...prev,
+          lat: Number(pos.coords.latitude.toFixed(6)),
+          lng: Number(pos.coords.longitude.toFixed(6)),
+        }));
         setGpsBusy(false);
-        toast.success("Координати визначено");
+        toast.success("Координати визначено — натисніть «Зберегти»");
       },
-      (err) => { setGpsBusy(false); toast.error("Не вдалося: " + err.message); },
-      { enableHighAccuracy: true, timeout: 10000 },
+      (err) => {
+        setGpsBusy(false);
+        toast.error(
+          err.code === err.PERMISSION_DENIED
+            ? "Доступ до геолокації заборонено. Дозвольте його в налаштуваннях браузера або відкрийте додаток у окремій вкладці, або введіть координати вручну."
+            : err.code === err.POSITION_UNAVAILABLE
+              ? "Не вдалося визначити позицію. Увімкніть GPS і спробуйте ще раз."
+              : "Час очікування вичерпано. Спробуйте ще раз.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   }
+
 
   async function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
