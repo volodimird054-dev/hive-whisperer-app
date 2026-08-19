@@ -76,6 +76,10 @@ function PointsPage() {
       toast.error("Браузер не підтримує геолокацію");
       return;
     }
+    if (!window.isSecureContext) {
+      toast.error("Геолокація доступна лише через HTTPS");
+      return;
+    }
     setGpsBusy(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -86,11 +90,18 @@ function PointsPage() {
       },
       (err) => {
         setGpsBusy(false);
-        toast.error("Не вдалося отримати координати: " + err.message);
+        toast.error(
+          err.code === err.PERMISSION_DENIED
+            ? "Доступ до геолокації заборонено. Дозвольте його в браузері або введіть координати вручну."
+            : err.code === err.POSITION_UNAVAILABLE
+              ? "Не вдалося визначити позицію. Увімкніть GPS і спробуйте ще раз."
+              : "Час очікування вичерпано. Спробуйте ще раз.",
+        );
       },
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   }
+
 
   async function add() {
     if (!apiary) {
