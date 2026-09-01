@@ -220,3 +220,35 @@ export function formatHM(iso: string): string {
   const dt = new Date(iso);
   return `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`;
 }
+
+// ---- Geocoding: address -> coordinates (Open-Meteo geocoding, no API key) ----
+export async function geocodeAddress(
+  address: string,
+): Promise<{ lat: number; lng: number; label: string } | null> {
+  const q = address.trim();
+  if (!q) return null;
+  // Take the most specific token chain: strip common Ukrainian prefixes
+  const cleaned = q
+    .replace(/\b(с\.|м\.|смт\.?|вул\.|буд\.?)\s*/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const attempts = [cleaned, cleaned.split(",")[0]?.trim() ?? ""];
+  for (const term of attempts) {
+    if (!term) continue;
+    try {
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(term)}&count=1&language=uk&format=json`;
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const json = await res.json();
+      const hit = json?.results?.[0];
+      if (hit?.latitude != null && hit?.longitude != null) {
+        return {
+          lat: Number(hit.latitude),
+          lng: Number(hit.longitude),
+          label: [hit.name, hit.admin1, hit.country].filter(Boolean).join(", "),
+        };
+      }
+    } catch { /* try next */ }
+  }
+  return null;
+}

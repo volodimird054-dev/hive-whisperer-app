@@ -27,7 +27,7 @@ import { generateHivesPdf } from "@/components/hive-qr";
 import { sortHives, filterHives } from "@/lib/hive-sort";
 import { PointEditDialog } from "@/components/point-edit-dialog";
 import { PointPhoto } from "@/components/point-photo";
-import { PointWeather } from "@/components/point-weather";
+import { PointWeatherAuto } from "@/components/point-weather-auto";
 
 export const Route = createFileRoute("/_app/points/$pointId")({
   component: PointPage,
@@ -299,13 +299,8 @@ function PointPage() {
       )}
 
       {/* Weather */}
-      {hasCoords ? (
-        <PointWeather lat={point.lat} lng={point.lng} pointId={point.id} />
-      ) : (
-        <Card className="p-4 text-sm text-muted-foreground">
-          Додайте GPS-координати, щоб бачити погоду й пасічницький прогноз для цього точка.
-        </Card>
-      )}
+      <PointWeatherAuto pointId={point.id} lat={point.lat} lng={point.lng} address={point.address} />
+
 
       {/* Migration history */}
       {history && history.length > 1 && (
