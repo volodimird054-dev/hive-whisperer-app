@@ -92,6 +92,14 @@ function PointPage() {
 
   async function add() {
     setSaving(true);
+    const wanted = tab === "single"
+      ? 1
+      : Math.max(0, (parseInt(rangeTo, 10) || 0) - (parseInt(rangeFrom, 10) || 0) + 1);
+    const limitErr = await checkFreeLimit(isNuclei, wanted);
+    if (limitErr) {
+      setSaving(false);
+      return toast.error(limitErr);
+    }
     const { data: u } = await supabase.auth.getUser();
     const user_id = u.user!.id;
 
