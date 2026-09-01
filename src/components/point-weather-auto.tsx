@@ -11,23 +11,24 @@ type Props = {
   address: string | null;
 };
 
-/** Shows weather using GPS coords when present, otherwise resolves the address automatically. */
+/** Shows weather for the point address; GPS coords are only a fallback. */
 export function PointWeatherAuto({ pointId, lat, lng, address }: Props) {
+  const hasAddress = !!address?.trim();
   const hasCoords = lat != null && lng != null;
 
   const { data: geo, isLoading } = useQuery({
     queryKey: ["geocode", address],
     queryFn: () => geocodeAddress(address ?? ""),
-    enabled: !hasCoords && !!address?.trim(),
+    enabled: hasAddress,
     staleTime: 24 * 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
 
-  if (hasCoords) {
+  if (!hasAddress && hasCoords) {
     return <PointWeather lat={lat as number} lng={lng as number} pointId={pointId} />;
   }
 
-  if (!address?.trim()) {
+  if (!hasAddress) {
     return (
       <Card className="p-4 text-sm text-muted-foreground">
         Вкажіть адресу або GPS-координати, щоб бачити погоду й пасічницький прогноз для цього точка.
