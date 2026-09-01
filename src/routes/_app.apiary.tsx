@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, UserPlus, Trash2, Users } from "lucide-react";
+import { Loader2, UserPlus, Trash2, Users, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/_app/apiary")({
   component: ApiaryPage,
