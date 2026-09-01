@@ -25,14 +25,36 @@ function ApiaryPage() {
   });
 
   const [name, setName] = useState("");
-  const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const { data: points } = useQuery({
+    queryKey: ["apiary-points-locations", data?.id],
+    enabled: !!data?.id,
+    queryFn: async () => {
+      const { data: rows } = await (supabase.from as any)("apiary_points")
+        .select("id, name, address, lat, lng, status")
+        .eq("apiary_id", data!.id)
+        .order("created_at");
+      return (rows ?? []) as Array<{
+        id: string; name: string; address: string | null; lat: number | null; lng: number | null; status?: string | null;
+      }>;
+    },
+  });
+
+  const pointLocations = (points ?? [])
+    .filter(p => p.status !== "inactive")
+    .map(p => ({
+      name: p.name,
+      loc: p.address || (p.lat != null && p.lng != null ? `${p.lat}, ${p.lng}` : null),
+    }))
+    .filter(p => !!p.loc);
+
+  const location = pointLocations.map(p => p.loc).join("; ");
 
   useEffect(() => {
     if (data) {
       setName(data.name ?? "");
-      setLocation(data.location ?? "");
       setDescription(data.description ?? "");
     }
   }, [data]);
@@ -63,8 +85,21 @@ function ApiaryPage() {
           <Input value={name} onChange={e => setName(e.target.value)} placeholder="Пасіка на лісовій галявині" />
         </div>
         <div>
-          <Label>Розташування</Label>
-          <Input value={location} onChange={e => setLocation(e.target.value)} placeholder="с. Лісне, Київська обл." />
+          <Label>Розташування (з точків)</Label>
+          {pointLocations.length > 0 ? (
+            <div className="mt-1 space-y-1">
+              {pointLocations.map((p, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm p-2 rounded bg-muted/40">
+                  <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                  <span><span className="font-medium">{p.name}</span> · {p.loc}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground mt-1">
+              Додайте точки у розділі «Мої точки» — розташування підтягнеться автоматично.
+            </p>
+          )}
         </div>
         <div>
           <Label>Опис</Label>
