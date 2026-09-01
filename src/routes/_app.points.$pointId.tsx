@@ -27,7 +27,7 @@ import { generateHivesPdf } from "@/components/hive-qr";
 import { sortHives, filterHives } from "@/lib/hive-sort";
 import { PointEditDialog } from "@/components/point-edit-dialog";
 import { PointPhoto } from "@/components/point-photo";
-import { PointWeather } from "@/components/point-weather";
+import { PointWeatherAuto } from "@/components/point-weather-auto";
 
 export const Route = createFileRoute("/_app/points/$pointId")({
   component: PointPage,
