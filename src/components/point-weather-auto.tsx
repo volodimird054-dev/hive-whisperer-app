@@ -45,6 +45,9 @@ export function PointWeatherAuto({ pointId, lat, lng, address }: Props) {
   }
 
   if (!geo) {
+    if (hasCoords) {
+      return <PointWeather lat={lat as number} lng={lng as number} pointId={pointId} />;
+    }
     return (
       <Card className="p-4 text-sm text-muted-foreground">
         Не вдалося знайти «{address}» на карті. Уточніть адресу або додайте GPS-координати.
