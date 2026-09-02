@@ -20,6 +20,7 @@ export const Route = createFileRoute("/_app/hives")({
 
 function HivesPage() {
   const qc = useQueryClient();
+  const { data: usage } = usePlanUsage();
   const { data: hives, isLoading } = useQuery({
     queryKey: ["hives"],
     queryFn: async () => {
