@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Plus, Loader2, Search } from "lucide-react";
 import { HiveCard } from "@/components/hive-card";
 import { sortHives, filterHives } from "@/lib/hive-sort";
+import { checkFreeLimit, usePlanUsage, FREE_LIMIT_HIVES, FREE_LIMIT_NUCLEI } from "@/lib/plan";
 
 export const Route = createFileRoute("/_app/hives")({
   component: HivesPage,
