@@ -3,6 +3,27 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Loader2, MapPin, Boxes, Egg, ClipboardList, Users } from "lucide-react";
+import { FREE_LIMIT_HIVES, FREE_LIMIT_NUCLEI } from "@/lib/plan";
+
+function LimitBar({ label, value, limit }: { label: string; value: number; limit: number }) {
+  const pct = Math.min(100, Math.round((value / limit) * 100));
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1">
+        <span>{label}</span>
+        <span className={value >= limit ? "text-destructive font-semibold" : "text-muted-foreground"}>
+          {value}/{limit}
+        </span>
+      </div>
+      <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div
+          className={`h-full ${value >= limit ? "bg-destructive" : "bg-honey"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_app/stats")({
   component: StatsPage,
