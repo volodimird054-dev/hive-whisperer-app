@@ -3,6 +3,27 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Loader2, MapPin, Boxes, Egg, ClipboardList, Users } from "lucide-react";
+import { FREE_LIMIT_HIVES, FREE_LIMIT_NUCLEI } from "@/lib/plan";
+
+function LimitBar({ label, value, limit }: { label: string; value: number; limit: number }) {
+  const pct = Math.min(100, Math.round((value / limit) * 100));
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1">
+        <span>{label}</span>
+        <span className={value >= limit ? "text-destructive font-semibold" : "text-muted-foreground"}>
+          {value}/{limit}
+        </span>
+      </div>
+      <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div
+          className={`h-full ${value >= limit ? "bg-destructive" : "bg-honey"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_app/stats")({
   component: StatsPage,
@@ -67,6 +88,14 @@ function StatsPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Статистика</h1>
+      <Card className="p-4 mb-3 space-y-2">
+        <div className="text-sm font-semibold">Безкоштовна версія</div>
+        <LimitBar label="Бджолосім’ї" value={data.hives} limit={FREE_LIMIT_HIVES} />
+        <LimitBar label="Нуклеуси" value={data.nuclei} limit={FREE_LIMIT_NUCLEI} />
+        <p className="text-xs text-muted-foreground">
+          Ліміт: до {FREE_LIMIT_HIVES} бджолосімей і {FREE_LIMIT_NUCLEI} нуклеусів. Архівні картки не враховуються.
+        </p>
+      </Card>
       <div className="grid gap-3 sm:grid-cols-2">
         <StatCard icon={MapPin} label="Точки" value={data.points} />
         <StatCard icon={Boxes} label="Вулики" value={data.hives} />

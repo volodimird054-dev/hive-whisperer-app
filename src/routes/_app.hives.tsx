@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Plus, Loader2, Search } from "lucide-react";
 import { HiveCard } from "@/components/hive-card";
 import { sortHives, filterHives } from "@/lib/hive-sort";
+import { checkFreeLimit, usePlanUsage, FREE_LIMIT_HIVES, FREE_LIMIT_NUCLEI } from "@/lib/plan";
 
 export const Route = createFileRoute("/_app/hives")({
   component: HivesPage,
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/_app/hives")({
 
 function HivesPage() {
   const qc = useQueryClient();
+  const { data: usage } = usePlanUsage();
   const { data: hives, isLoading } = useQuery({
     queryKey: ["hives"],
     queryFn: async () => {
@@ -49,6 +51,11 @@ function HivesPage() {
 
   async function add() {
     setSaving(true);
+    const limitErr = await checkFreeLimit(false, 1);
+    if (limitErr) {
+      setSaving(false);
+      return toast.error(limitErr);
+    }
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("hives").insert({
       user_id: u.user!.id,
@@ -62,11 +69,17 @@ function HivesPage() {
     setNumber(""); setBreed(""); setQueenYear(""); setNotes("");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["hives"] });
+    qc.invalidateQueries({ queryKey: ["plan-usage"] });
     toast.success("Вулик додано");
   }
 
   return (
     <div>
+      {usage && (
+        <Card className="p-3 mb-3 text-xs text-muted-foreground">
+          Безкоштовна версія: бджолосім’ї {usage.hives}/{FREE_LIMIT_HIVES} · нуклеуси {usage.nuclei}/{FREE_LIMIT_NUCLEI}
+        </Card>
+      )}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Всі вулики</h1>
         <div className="flex items-center gap-2">

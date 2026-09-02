@@ -28,6 +28,7 @@ import { sortHives, filterHives } from "@/lib/hive-sort";
 import { PointEditDialog } from "@/components/point-edit-dialog";
 import { PointPhoto } from "@/components/point-photo";
 import { PointWeatherAuto } from "@/components/point-weather-auto";
+import { checkFreeLimit } from "@/lib/plan";
 
 export const Route = createFileRoute("/_app/points/$pointId")({
   component: PointPage,
@@ -169,6 +170,7 @@ function PointPage() {
     qc.invalidateQueries({ queryKey: ["hives"] });
     qc.invalidateQueries({ queryKey: ["stats"] });
     qc.invalidateQueries({ queryKey: ["archived-hives"] });
+    qc.invalidateQueries({ queryKey: ["plan-usage"] });
   }
 
   async function delPoint() {
