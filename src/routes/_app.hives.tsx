@@ -68,11 +68,17 @@ function HivesPage() {
     setNumber(""); setBreed(""); setQueenYear(""); setNotes("");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["hives"] });
+    qc.invalidateQueries({ queryKey: ["plan-usage"] });
     toast.success("Вулик додано");
   }
 
   return (
     <div>
+      {usage && (
+        <Card className="p-3 mb-3 text-xs text-muted-foreground">
+          Безкоштовна версія: бджолосім’ї {usage.hives}/{FREE_LIMIT_HIVES} · нуклеуси {usage.nuclei}/{FREE_LIMIT_NUCLEI}
+        </Card>
+      )}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Всі вулики</h1>
         <div className="flex items-center gap-2">
