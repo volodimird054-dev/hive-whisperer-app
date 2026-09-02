@@ -49,6 +49,11 @@ function HivesPage() {
 
   async function add() {
     setSaving(true);
+    const limitErr = await checkFreeLimit(false, 1);
+    if (limitErr) {
+      setSaving(false);
+      return toast.error(limitErr);
+    }
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("hives").insert({
       user_id: u.user!.id,
