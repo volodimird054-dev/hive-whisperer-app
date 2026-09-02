@@ -170,6 +170,7 @@ function PointPage() {
     qc.invalidateQueries({ queryKey: ["hives"] });
     qc.invalidateQueries({ queryKey: ["stats"] });
     qc.invalidateQueries({ queryKey: ["archived-hives"] });
+    qc.invalidateQueries({ queryKey: ["plan-usage"] });
   }
 
   async function delPoint() {
