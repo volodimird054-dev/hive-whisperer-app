@@ -21,6 +21,7 @@ import { Route as AppChatRouteImport } from './routes/_app.chat'
 import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
 import { Route as AppArchiveRouteImport } from './routes/_app.archive'
 import { Route as AppApiaryRouteImport } from './routes/_app.apiary'
+import { Route as AppQueensIndexRouteImport } from './routes/_app.queens.index'
 import { Route as AppPointsIndexRouteImport } from './routes/_app.points.index'
 import { Route as AppPointsPointIdRouteImport } from './routes/_app.points.$pointId'
 import { Route as AppHQrUuidRouteImport } from './routes/_app.h.$qrUuid'
@@ -84,6 +85,11 @@ const AppApiaryRoute = AppApiaryRouteImport.update({
   path: '/apiary',
   getParentRoute: () => AppRoute,
 } as any)
+const AppQueensIndexRoute = AppQueensIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppQueensRoute,
+} as any)
 const AppPointsIndexRoute = AppPointsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -110,11 +116,12 @@ export interface FileRoutesByFullPath {
   '/hives': typeof AppHivesRoute
   '/marketplace': typeof AppMarketplaceRoute
   '/points': typeof AppPointsRouteWithChildren
-  '/queens': typeof AppQueensRoute
+  '/queens': typeof AppQueensRouteWithChildren
   '/stats': typeof AppStatsRoute
   '/h/$qrUuid': typeof AppHQrUuidRoute
   '/points/$pointId': typeof AppPointsPointIdRoute
   '/points/': typeof AppPointsIndexRoute
+  '/queens/': typeof AppQueensIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -124,12 +131,12 @@ export interface FileRoutesByTo {
   '/chat': typeof AppChatRoute
   '/hives': typeof AppHivesRoute
   '/marketplace': typeof AppMarketplaceRoute
-  '/queens': typeof AppQueensRoute
   '/stats': typeof AppStatsRoute
   '/': typeof AppIndexRoute
   '/h/$qrUuid': typeof AppHQrUuidRoute
   '/points/$pointId': typeof AppPointsPointIdRoute
   '/points': typeof AppPointsIndexRoute
+  '/queens': typeof AppQueensIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -142,12 +149,13 @@ export interface FileRoutesById {
   '/_app/hives': typeof AppHivesRoute
   '/_app/marketplace': typeof AppMarketplaceRoute
   '/_app/points': typeof AppPointsRouteWithChildren
-  '/_app/queens': typeof AppQueensRoute
+  '/_app/queens': typeof AppQueensRouteWithChildren
   '/_app/stats': typeof AppStatsRoute
   '/_app/': typeof AppIndexRoute
   '/_app/h/$qrUuid': typeof AppHQrUuidRoute
   '/_app/points/$pointId': typeof AppPointsPointIdRoute
   '/_app/points/': typeof AppPointsIndexRoute
+  '/_app/queens/': typeof AppQueensIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -166,6 +174,7 @@ export interface FileRouteTypes {
     | '/h/$qrUuid'
     | '/points/$pointId'
     | '/points/'
+    | '/queens/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -175,12 +184,12 @@ export interface FileRouteTypes {
     | '/chat'
     | '/hives'
     | '/marketplace'
-    | '/queens'
     | '/stats'
     | '/'
     | '/h/$qrUuid'
     | '/points/$pointId'
     | '/points'
+    | '/queens'
   id:
     | '__root__'
     | '/_app'
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/_app/h/$qrUuid'
     | '/_app/points/$pointId'
     | '/_app/points/'
+    | '/_app/queens/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -291,6 +301,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppApiaryRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/queens/': {
+      id: '/_app/queens/'
+      path: '/'
+      fullPath: '/queens/'
+      preLoaderRoute: typeof AppQueensIndexRouteImport
+      parentRoute: typeof AppQueensRoute
+    }
     '/_app/points/': {
       id: '/_app/points/'
       path: '/'
@@ -329,6 +346,18 @@ const AppPointsRouteWithChildren = AppPointsRoute._addFileChildren(
   AppPointsRouteChildren,
 )
 
+interface AppQueensRouteChildren {
+  AppQueensIndexRoute: typeof AppQueensIndexRoute
+}
+
+const AppQueensRouteChildren: AppQueensRouteChildren = {
+  AppQueensIndexRoute: AppQueensIndexRoute,
+}
+
+const AppQueensRouteWithChildren = AppQueensRoute._addFileChildren(
+  AppQueensRouteChildren,
+)
+
 interface AppRouteChildren {
   AppApiaryRoute: typeof AppApiaryRoute
   AppArchiveRoute: typeof AppArchiveRoute
@@ -337,7 +366,7 @@ interface AppRouteChildren {
   AppHivesRoute: typeof AppHivesRoute
   AppMarketplaceRoute: typeof AppMarketplaceRoute
   AppPointsRoute: typeof AppPointsRouteWithChildren
-  AppQueensRoute: typeof AppQueensRoute
+  AppQueensRoute: typeof AppQueensRouteWithChildren
   AppStatsRoute: typeof AppStatsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppHQrUuidRoute: typeof AppHQrUuidRoute
@@ -351,7 +380,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHivesRoute: AppHivesRoute,
   AppMarketplaceRoute: AppMarketplaceRoute,
   AppPointsRoute: AppPointsRouteWithChildren,
-  AppQueensRoute: AppQueensRoute,
+  AppQueensRoute: AppQueensRouteWithChildren,
   AppStatsRoute: AppStatsRoute,
   AppIndexRoute: AppIndexRoute,
   AppHQrUuidRoute: AppHQrUuidRoute,

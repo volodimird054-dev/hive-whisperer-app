@@ -578,36 +578,181 @@ export type Database = {
         }
         Relationships: []
       }
-      queen_batches: {
+      queen_batch_events: {
         Row: {
-          count: number | null
+          batch_id: string
           created_at: string
-          grafted_on: string
+          field: string
           id: string
-          mother_hive: string | null
-          name: string
-          notes: string | null
+          new_value: string | null
+          note: string | null
+          old_value: string | null
           user_id: string
         }
         Insert: {
-          count?: number | null
+          batch_id: string
           created_at?: string
-          grafted_on: string
+          field: string
           id?: string
-          mother_hive?: string | null
-          name: string
-          notes?: string | null
+          new_value?: string | null
+          note?: string | null
+          old_value?: string | null
           user_id: string
         }
         Update: {
+          batch_id?: string
+          created_at?: string
+          field?: string
+          id?: string
+          new_value?: string | null
+          note?: string | null
+          old_value?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queen_batch_events_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "queen_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      queen_batch_steps: {
+        Row: {
+          actual_note: string | null
+          batch_id: string
+          created_at: string
+          day_offset: number
+          done: boolean
+          done_on: string | null
+          id: string
+          planned_on: string | null
+          sort_order: number
+          step_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_note?: string | null
+          batch_id: string
+          created_at?: string
+          day_offset?: number
+          done?: boolean
+          done_on?: string | null
+          id?: string
+          planned_on?: string | null
+          sort_order?: number
+          step_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_note?: string | null
+          batch_id?: string
+          created_at?: string
+          day_offset?: number
+          done?: boolean
+          done_on?: string | null
+          id?: string
+          planned_on?: string | null
+          sort_order?: number
+          step_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queen_batch_steps_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "queen_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      queen_batches: {
+        Row: {
+          acceptance_check_on: string | null
+          accepted_count: number | null
+          cells_harvested: number | null
+          count: number | null
+          created_at: string
+          eggs_laid_on: string | null
+          emerged_on: string | null
+          grafted_on: string
+          id: string
+          larvae_count: number | null
+          larvae_hatched_on: string | null
+          method: string
+          mother_hive: string | null
+          name: string
+          next_action: string | null
+          next_action_done_on: string | null
+          next_action_planned_on: string | null
+          notes: string | null
+          nurse_on: string | null
+          sealed_on: string | null
+          starter_on: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          virgin_queens_count: number | null
+        }
+        Insert: {
+          acceptance_check_on?: string | null
+          accepted_count?: number | null
+          cells_harvested?: number | null
           count?: number | null
           created_at?: string
+          eggs_laid_on?: string | null
+          emerged_on?: string | null
+          grafted_on: string
+          id?: string
+          larvae_count?: number | null
+          larvae_hatched_on?: string | null
+          method?: string
+          mother_hive?: string | null
+          name: string
+          next_action?: string | null
+          next_action_done_on?: string | null
+          next_action_planned_on?: string | null
+          notes?: string | null
+          nurse_on?: string | null
+          sealed_on?: string | null
+          starter_on?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          virgin_queens_count?: number | null
+        }
+        Update: {
+          acceptance_check_on?: string | null
+          accepted_count?: number | null
+          cells_harvested?: number | null
+          count?: number | null
+          created_at?: string
+          eggs_laid_on?: string | null
+          emerged_on?: string | null
           grafted_on?: string
           id?: string
+          larvae_count?: number | null
+          larvae_hatched_on?: string | null
+          method?: string
           mother_hive?: string | null
           name?: string
+          next_action?: string | null
+          next_action_done_on?: string | null
+          next_action_planned_on?: string | null
           notes?: string | null
+          nurse_on?: string | null
+          sealed_on?: string | null
+          starter_on?: string | null
+          status?: string
+          updated_at?: string
           user_id?: string
+          virgin_queens_count?: number | null
         }
         Relationships: []
       }
