@@ -23,6 +23,7 @@ import { Route as AppArchiveRouteImport } from './routes/_app.archive'
 import { Route as AppApiaryRouteImport } from './routes/_app.apiary'
 import { Route as AppQueensIndexRouteImport } from './routes/_app.queens.index'
 import { Route as AppPointsIndexRouteImport } from './routes/_app.points.index'
+import { Route as AppQueensBatchIdRouteImport } from './routes/_app.queens.$batchId'
 import { Route as AppPointsPointIdRouteImport } from './routes/_app.points.$pointId'
 import { Route as AppHQrUuidRouteImport } from './routes/_app.h.$qrUuid'
 
@@ -95,6 +96,11 @@ const AppPointsIndexRoute = AppPointsIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppPointsRoute,
 } as any)
+const AppQueensBatchIdRoute = AppQueensBatchIdRouteImport.update({
+  id: '/$batchId',
+  path: '/$batchId',
+  getParentRoute: () => AppQueensRoute,
+} as any)
 const AppPointsPointIdRoute = AppPointsPointIdRouteImport.update({
   id: '/$pointId',
   path: '/$pointId',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/stats': typeof AppStatsRoute
   '/h/$qrUuid': typeof AppHQrUuidRoute
   '/points/$pointId': typeof AppPointsPointIdRoute
+  '/queens/$batchId': typeof AppQueensBatchIdRoute
   '/points/': typeof AppPointsIndexRoute
   '/queens/': typeof AppQueensIndexRoute
 }
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/h/$qrUuid': typeof AppHQrUuidRoute
   '/points/$pointId': typeof AppPointsPointIdRoute
+  '/queens/$batchId': typeof AppQueensBatchIdRoute
   '/points': typeof AppPointsIndexRoute
   '/queens': typeof AppQueensIndexRoute
 }
@@ -154,6 +162,7 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/h/$qrUuid': typeof AppHQrUuidRoute
   '/_app/points/$pointId': typeof AppPointsPointIdRoute
+  '/_app/queens/$batchId': typeof AppQueensBatchIdRoute
   '/_app/points/': typeof AppPointsIndexRoute
   '/_app/queens/': typeof AppQueensIndexRoute
 }
@@ -173,6 +182,7 @@ export interface FileRouteTypes {
     | '/stats'
     | '/h/$qrUuid'
     | '/points/$pointId'
+    | '/queens/$batchId'
     | '/points/'
     | '/queens/'
   fileRoutesByTo: FileRoutesByTo
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/'
     | '/h/$qrUuid'
     | '/points/$pointId'
+    | '/queens/$batchId'
     | '/points'
     | '/queens'
   id:
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/h/$qrUuid'
     | '/_app/points/$pointId'
+    | '/_app/queens/$batchId'
     | '/_app/points/'
     | '/_app/queens/'
   fileRoutesById: FileRoutesById
@@ -315,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPointsIndexRouteImport
       parentRoute: typeof AppPointsRoute
     }
+    '/_app/queens/$batchId': {
+      id: '/_app/queens/$batchId'
+      path: '/$batchId'
+      fullPath: '/queens/$batchId'
+      preLoaderRoute: typeof AppQueensBatchIdRouteImport
+      parentRoute: typeof AppQueensRoute
+    }
     '/_app/points/$pointId': {
       id: '/_app/points/$pointId'
       path: '/$pointId'
@@ -347,10 +366,12 @@ const AppPointsRouteWithChildren = AppPointsRoute._addFileChildren(
 )
 
 interface AppQueensRouteChildren {
+  AppQueensBatchIdRoute: typeof AppQueensBatchIdRoute
   AppQueensIndexRoute: typeof AppQueensIndexRoute
 }
 
 const AppQueensRouteChildren: AppQueensRouteChildren = {
+  AppQueensBatchIdRoute: AppQueensBatchIdRoute,
   AppQueensIndexRoute: AppQueensIndexRoute,
 }
 
