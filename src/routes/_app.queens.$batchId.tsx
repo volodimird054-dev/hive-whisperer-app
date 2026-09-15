@@ -107,7 +107,7 @@ function BatchPage() {
     });
   }
 
-  async function patchBatch(patch: Record<string, any>, logFields: string[] = []) {
+  async function patchBatch(patch: any, logFields: string[] = []) {
     for (const f of logFields) {
       if (batch[f] !== patch[f]) await logEvent(f, batch[f], patch[f]);
     }
@@ -282,7 +282,7 @@ function StepCard({
 }) {
   const [saving, setSaving] = useState(false);
 
-  async function patch(p: Record<string, any>) {
+  async function patch(p: any) {
     if (!row) return;
     setSaving(true);
     const { error } = await supabase.from("queen_batch_steps").update(p).eq("id", row.id);
