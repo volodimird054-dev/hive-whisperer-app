@@ -1,0 +1,431 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ArrowLeft, AlertTriangle, Lightbulb, History, Info } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  METHOD_LABEL,
+  NEXT_ACTION_LABEL,
+  QUEEN_STATUSES,
+  buildStepDefs,
+  dayLabel,
+  plannedDates,
+  statusLabel,
+  suggestedStatus,
+  addDays,
+  type QueenMethod,
+  type QueenNextAction,
+  type StepDef,
+} from "@/lib/queens";
+import { createStepsFor } from "./_app.queens.index";
+
+export const Route = createFileRoute("/_app/queens/$batchId")({
+  head: () => ({
+    meta: [
+      { title: "Технічна карта партії — Пасічник" },
+      { name: "description", content: "Покрокова технічна карта партії виведення маток: планові й фактичні дати, поради та застереження." },
+      { property: "og:title", content: "Технічна карта партії — Пасічник" },
+      { property: "og:description", content: "Покрокова технічна карта партії виведення маток." },
+      { property: "og:type", content: "article" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: BatchPage,
+});
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+function BatchPage() {
+  const { batchId } = Route.useParams();
+  const qc = useQueryClient();
+
+  const { data: batch } = useQuery({
+    queryKey: ["queen-batch", batchId],
+    queryFn: async () =>
+      (await supabase.from("queen_batches").select("*").eq("id", batchId).maybeSingle()).data as any,
+  });
+
+  const { data: steps } = useQuery({
+    queryKey: ["queen-steps", batchId],
+    enabled: !!batch,
+    queryFn: async () =>
+      (await supabase.from("queen_batch_steps").select("*").eq("batch_id", batchId).order("sort_order")).data ?? [],
+  });
+
+  const { data: events } = useQuery({
+    queryKey: ["queen-events", batchId],
+    queryFn: async () =>
+      (await supabase
+        .from("queen_batch_events")
+        .select("*")
+        .eq("batch_id", batchId)
+        .order("created_at", { ascending: false })).data ?? [],
+  });
+
+  // Старі партії без кроків — формуємо технічну карту при першому відкритті.
+  useEffect(() => {
+    if (!batch || !steps || steps.length) return;
+    (async () => {
+      await createStepsFor(batch);
+      qc.invalidateQueries({ queryKey: ["queen-steps", batchId] });
+    })();
+  }, [batch, steps, batchId, qc]);
+
+  if (!batch) {
+    return <div className="text-muted-foreground">Завантаження…</div>;
+  }
+
+  const method: QueenMethod = (batch.method ?? "comb") as QueenMethod;
+  const nextAction: QueenNextAction = (batch.next_action ?? "cells") as QueenNextAction;
+  const defs = buildStepDefs(method, nextAction);
+  const suggested = suggestedStatus(method, nextAction, batch.grafted_on);
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["queen-batch", batchId] });
+    qc.invalidateQueries({ queryKey: ["queen-steps", batchId] });
+    qc.invalidateQueries({ queryKey: ["queen-events", batchId] });
+    qc.invalidateQueries({ queryKey: ["queens"] });
+  };
+
+  async function logEvent(field: string, oldValue: any, newValue: any) {
+    await supabase.from("queen_batch_events").insert({
+      batch_id: batchId,
+      user_id: batch.user_id,
+      field,
+      old_value: oldValue == null ? null : String(oldValue),
+      new_value: newValue == null ? null : String(newValue),
+    });
+  }
+
+  async function patchBatch(patch: Record<string, any>, logFields: string[] = []) {
+    for (const f of logFields) {
+      if (batch[f] !== patch[f]) await logEvent(f, batch[f], patch[f]);
+    }
+    const { error } = await supabase.from("queen_batches").update(patch).eq("id", batchId);
+    if (error) return toast.error(error.message);
+    toast.success("Збережено");
+    refresh();
+  }
+
+  async function recalcPlanned() {
+    const dates = plannedDates(method, batch.grafted_on);
+    await supabase.from("queen_batches").update(dates).eq("id", batchId);
+    for (const d of defs) {
+      await supabase
+        .from("queen_batch_steps")
+        .update({ planned_on: addDays(batch.grafted_on, d.dayFrom) })
+        .eq("batch_id", batchId)
+        .eq("step_key", d.key);
+    }
+    toast.success("Планові дати перераховано (фактичні не змінено)");
+    refresh();
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Link to="/queens">
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+        </Link>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold truncate">{batch.name}</h1>
+          <div className="text-xs text-muted-foreground">
+            {METHOD_LABEL[method]} → {NEXT_ACTION_LABEL[nextAction]} · старт {batch.grafted_on}
+          </div>
+        </div>
+      </div>
+
+      <Card className="p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <Label className="text-xs">Статус партії</Label>
+            <div className="mt-1">
+              <Select value={batch.status ?? "planned"} onValueChange={(v) => patchBatch({ status: v }, ["status"])}>
+                <SelectTrigger className="w-[230px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {QUEEN_STATUSES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+        {batch.status !== suggested ? (
+          <div className="text-xs text-muted-foreground flex items-start gap-1">
+            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <span>
+              За календарем зараз: «{statusLabel(suggested)}».{" "}
+              <button className="underline" onClick={() => patchBatch({ status: suggested }, ["status"])}>
+                Застосувати
+              </button>
+            </span>
+          </div>
+        ) : null}
+
+        <div className="grid grid-cols-2 gap-3">
+          <PlanField label="Дата початку" value={batch.grafted_on} onSave={(v) => patchBatch({ grafted_on: v })} />
+          {method === "comb" ? (
+            <PlanField label="Відкладання яєць" value={batch.eggs_laid_on} onSave={(v) => patchBatch({ eggs_laid_on: v })} />
+          ) : null}
+          <PlanField label="Одноденні личинки" value={batch.larvae_hatched_on} onSave={(v) => patchBatch({ larvae_hatched_on: v })} />
+          <PlanField label="Постановка у стартер" value={batch.starter_on} onSave={(v) => patchBatch({ starter_on: v })} />
+          <PlanField label="Контроль прийому" value={batch.acceptance_check_on} onSave={(v) => patchBatch({ acceptance_check_on: v })} />
+          <PlanField label="Перестановка у виховательку" value={batch.nurse_on} onSave={(v) => patchBatch({ nurse_on: v })} />
+          <PlanField label="Запечатування (розрахунок)" value={batch.sealed_on} onSave={(v) => patchBatch({ sealed_on: v })} />
+          <PlanField
+            label={`${NEXT_ACTION_LABEL[nextAction]} (план)`}
+            value={batch.next_action_planned_on}
+            onSave={(v) => patchBatch({ next_action_planned_on: v })}
+          />
+          <PlanField
+            label={`${NEXT_ACTION_LABEL[nextAction]} (факт)`}
+            value={batch.next_action_done_on}
+            onSave={(v) => patchBatch({ next_action_done_on: v }, ["next_action_done_on"])}
+          />
+          <PlanField label="Вихід маток (факт)" value={batch.emerged_on} onSave={(v) => patchBatch({ emerged_on: v }, ["emerged_on"])} />
+        </div>
+
+        <div className="text-xs text-muted-foreground">
+          Контроль прийому і перестановка у виховательку — один і той самий день ({method === "comb" ? "5-й" : "1-й"} день).
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <NumField label="Кількість личинок / мисочок" value={batch.larvae_count ?? batch.count} onSave={(v) => patchBatch({ larvae_count: v, count: v }, ["larvae_count"])} />
+          <NumField label="Фактично прийнято личинок" value={batch.accepted_count} onSave={(v) => patchBatch({ accepted_count: v }, ["accepted_count"])} />
+          <NumField label="Відібрано маточників" value={batch.cells_harvested} onSave={(v) => patchBatch({ cells_harvested: v }, ["cells_harvested"])} />
+          <NumField label="Отримано неплідних маток" value={batch.virgin_queens_count} onSave={(v) => patchBatch({ virgin_queens_count: v }, ["virgin_queens_count"])} />
+        </div>
+
+        <div>
+          <Label className="text-xs">Примітки партії</Label>
+          <NoteField value={batch.notes} onSave={(v) => patchBatch({ notes: v })} />
+        </div>
+
+        <Button variant="outline" size="sm" onClick={recalcPlanned}>
+          Перерахувати планові дати від дати початку
+        </Button>
+      </Card>
+
+      <div className="space-y-3">
+        <h2 className="font-semibold">Технічна карта</h2>
+        {defs.map((def, i) => {
+          const row = steps?.find((s: any) => s.step_key === def.key);
+          return <StepCard key={def.key} n={i + 1} def={def} row={row} batch={batch} onChange={refresh} />;
+        })}
+      </div>
+
+      <Collapsible>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" size="sm" className="w-full">
+            <History className="w-4 h-4 mr-1" />
+            Історія змін ({events?.length ?? 0})
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <Card className="p-3 mt-2 space-y-2">
+            {!events?.length ? (
+              <div className="text-xs text-muted-foreground">Змін ще не було.</div>
+            ) : (
+              events.map((e: any) => (
+                <div key={e.id} className="text-xs">
+                  <span className="text-muted-foreground">{new Date(e.created_at).toLocaleString("uk-UA")}</span>{" "}
+                  · {FIELD_LABEL[e.field] ?? e.field}: <b>{e.old_value ?? "—"}</b> → <b>{e.new_value ?? "—"}</b>
+                </div>
+              ))
+            )}
+          </Card>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
+
+const FIELD_LABEL: Record<string, string> = {
+  accepted_count: "Фактично прийнято личинок",
+  larvae_count: "Кількість личинок / мисочок",
+  cells_harvested: "Відібрано маточників",
+  virgin_queens_count: "Отримано неплідних маток",
+  next_action_done_on: "Фактична дата виконання",
+  emerged_on: "Дата виходу маток",
+  status: "Статус",
+};
+
+function StepCard({
+  n,
+  def,
+  row,
+  batch,
+  onChange,
+}: {
+  n: number;
+  def: StepDef;
+  row: any;
+  batch: any;
+  onChange: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  async function patch(p: Record<string, any>) {
+    if (!row) return;
+    setSaving(true);
+    const { error } = await supabase.from("queen_batch_steps").update(p).eq("id", row.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    onChange();
+  }
+
+  const planned = row?.planned_on ?? addDays(batch.grafted_on, def.dayFrom);
+  const done = !!row?.done;
+  const isPast = planned <= today();
+
+  return (
+    <Card className={`p-4 ${def.critical ? "border-destructive/60" : ""}`}>
+      <div className="flex items-start gap-3">
+        <div className="w-7 h-7 shrink-0 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-sm font-bold">
+          {n}
+        </div>
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="font-semibold leading-snug">{def.title}</div>
+          <div className="flex flex-wrap items-center gap-1">
+            <Badge variant="outline">{dayLabel(def)}</Badge>
+            <Badge variant="secondary">{planned}</Badge>
+            <Badge variant={done ? "default" : isPast ? "destructive" : "outline"}>
+              {done ? "Виконано" : isPast ? "Пора виконати" : "Заплановано"}
+            </Badge>
+          </div>
+
+          <div className="text-xs flex items-start gap-1 text-muted-foreground">
+            <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <span>{def.advice}</span>
+          </div>
+
+          {def.warning ? (
+            def.critical ? (
+              <div className="rounded-md border border-destructive bg-destructive/10 p-2 text-xs text-destructive flex items-start gap-1">
+                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>{def.warning}</span>
+              </div>
+            ) : (
+              <div className="text-xs flex items-start gap-1 text-muted-foreground">
+                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                <span>{def.warning}</span>
+              </div>
+            )
+          ) : null}
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div>
+              <Label className="text-xs">Планова дата</Label>
+              <Input
+                type="date"
+                value={row?.planned_on ?? ""}
+                disabled={!row || saving}
+                onChange={(e) => patch({ planned_on: e.target.value || null })}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Фактична дата</Label>
+              <Input
+                type="date"
+                value={row?.done_on ?? ""}
+                disabled={!row || saving}
+                onChange={(e) => patch({ done_on: e.target.value || null })}
+              />
+            </div>
+          </div>
+
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={done}
+              disabled={!row || saving}
+              onCheckedChange={(v) => patch({ done: !!v })}
+            />
+            Відмітити виконання
+          </label>
+
+          <div>
+            <Label className="text-xs">Примітка</Label>
+            <NoteField value={row?.actual_note} onSave={(v) => patch({ actual_note: v })} />
+          </div>
+
+          {def.acceptance ? (
+            <div className="rounded-md bg-secondary p-2 text-xs">
+              Фактично прийнято личинок вводиться у блоці даних партії вище — значення можна коригувати пізніше, зміни
+              зберігаються в історії.
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function PlanField({ label, value, onSave }: { label: string; value: string | null; onSave: (v: string | null) => void }) {
+  const [v, setV] = useState(value ?? "");
+  useEffect(() => setV(value ?? ""), [value]);
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <Input
+        type="date"
+        value={v}
+        onChange={(e) => setV(e.target.value)}
+        onBlur={() => {
+          if ((value ?? "") !== v) onSave(v || null);
+        }}
+      />
+    </div>
+  );
+}
+
+function NumField({ label, value, onSave }: { label: string; value: number | null; onSave: (v: number | null) => void }) {
+  const [v, setV] = useState(value?.toString() ?? "");
+  useEffect(() => setV(value?.toString() ?? ""), [value]);
+  return (
+    <div>
+      <Label className="text-xs">{label}</Label>
+      <Input
+        type="number"
+        value={v}
+        onChange={(e) => setV(e.target.value)}
+        onBlur={() => {
+          const next = v === "" ? null : Number(v);
+          if ((value ?? null) !== next) onSave(next);
+        }}
+      />
+    </div>
+  );
+}
+
+function NoteField({ value, onSave }: { value: string | null; onSave: (v: string | null) => void }) {
+  const [v, setV] = useState(value ?? "");
+  useEffect(() => setV(value ?? ""), [value]);
+  return (
+    <Textarea
+      rows={2}
+      value={v}
+      placeholder="Примітка…"
+      onChange={(e) => setV(e.target.value)}
+      onBlur={() => {
+        if ((value ?? "") !== v) onSave(v || null);
+      }}
+    />
+  );
+}
