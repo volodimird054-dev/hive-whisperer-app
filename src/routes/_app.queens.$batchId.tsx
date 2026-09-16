@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ArrowLeft, AlertTriangle, Lightbulb, History, Info } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CalendarDays, Check, ChevronDown, Lightbulb, History, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -44,6 +44,13 @@ export const Route = createFileRoute("/_app/queens/$batchId")({
 });
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+const SCENARIO_STYLE = {
+  "comb-cells": { bar: "bg-chart-2", soft: "bg-chart-2/10", border: "border-chart-2/40" },
+  "comb-protectors": { bar: "bg-chart-1", soft: "bg-chart-1/10", border: "border-chart-1/40" },
+  "transfer-cells": { bar: "bg-chart-3", soft: "bg-chart-3/10", border: "border-chart-3/40" },
+  "transfer-protectors": { bar: "bg-chart-4", soft: "bg-chart-4/10", border: "border-chart-4/40" },
+} as const;
 
 function BatchPage() {
   const { batchId } = Route.useParams();
@@ -89,6 +96,8 @@ function BatchPage() {
   const nextAction: QueenNextAction = (batch.next_action ?? "cells") as QueenNextAction;
   const defs = buildStepDefs(method, nextAction);
   const suggested = suggestedStatus(method, nextAction, batch.grafted_on);
+  const scenario = SCENARIO_STYLE[`${method}-${nextAction}`];
+  const completedCount = steps?.filter((step: any) => step.done).length ?? 0;
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["queen-batch", batchId] });
@@ -132,7 +141,7 @@ function BatchPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 lg:relative lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-w-5xl lg:-translate-x-1/2">
       <div className="flex items-center gap-2">
         <Link to="/queens">
           <Button variant="ghost" size="icon">
@@ -140,20 +149,36 @@ function BatchPage() {
           </Button>
         </Link>
         <div className="min-w-0">
-          <h1 className="text-xl font-bold truncate">{batch.name}</h1>
+          <h1 className="truncate text-xl font-bold">{batch.name}</h1>
           <div className="text-xs text-muted-foreground">
             {METHOD_LABEL[method]} → {NEXT_ACTION_LABEL[nextAction]} · старт {batch.grafted_on}
           </div>
         </div>
       </div>
 
-      <Card className="p-4 space-y-3">
+      <Card className={`overflow-hidden p-0 ${scenario.border}`}>
+        <div className={`h-2 ${scenario.bar}`} />
+        <div className={`border-b p-4 ${scenario.soft}`}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium uppercase text-muted-foreground">Технічна карта</p>
+              <h2 className="mt-1 font-bold">{METHOD_LABEL[method]} → {NEXT_ACTION_LABEL[nextAction]}</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Початок {batch.grafted_on} · виконано {completedCount} з {defs.length} етапів</p>
+            </div>
+            <Badge variant="secondary">{statusLabel(batch.status)}</Badge>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-background/70">
+            <div className={`h-full rounded-full ${scenario.bar}`} style={{ width: `${defs.length ? (completedCount / defs.length) * 100 : 0}%` }} />
+          </div>
+        </div>
+
+        <div className="space-y-4 p-4">
         <div className="flex items-center justify-between gap-2">
           <div>
             <Label className="text-xs">Статус партії</Label>
             <div className="mt-1">
               <Select value={batch.status ?? "planned"} onValueChange={(v) => patchBatch({ status: v }, ["status"])}>
-                <SelectTrigger className="w-[230px]">
+              <SelectTrigger className="w-full sm:w-[260px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -172,14 +197,22 @@ function BatchPage() {
             <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
             <span>
               За календарем зараз: «{statusLabel(suggested)}».{" "}
-              <button className="underline" onClick={() => patchBatch({ status: suggested }, ["status"])}>
+               <button className="font-medium text-primary underline" onClick={() => patchBatch({ status: suggested }, ["status"])}>
                 Застосувати
               </button>
             </span>
           </div>
         ) : null}
 
-        <div className="grid grid-cols-2 gap-3">
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full justify-between">
+              Дані та результати партії
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4 space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <PlanField label="Дата початку" value={batch.grafted_on} onSave={(v) => patchBatch({ grafted_on: v })} />
           {method === "comb" ? (
             <PlanField label="Відкладання яєць" value={batch.eggs_laid_on} onSave={(v) => patchBatch({ eggs_laid_on: v })} />
@@ -206,7 +239,7 @@ function BatchPage() {
           Контроль прийому і перестановка у виховательку — один і той самий день ({method === "comb" ? "5-й" : "1-й"} день).
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <NumField label="Кількість личинок / мисочок" value={batch.larvae_count ?? batch.count} onSave={(v) => patchBatch({ larvae_count: v, count: v }, ["larvae_count"])} />
           <NumField label="Фактично прийнято личинок" value={batch.accepted_count} onSave={(v) => patchBatch({ accepted_count: v }, ["accepted_count"])} />
           <NumField label="Відібрано маточників" value={batch.cells_harvested} onSave={(v) => patchBatch({ cells_harvested: v }, ["cells_harvested"])} />
@@ -221,14 +254,25 @@ function BatchPage() {
         <Button variant="outline" size="sm" onClick={recalcPlanned}>
           Перерахувати планові дати від дати початку
         </Button>
+          </CollapsibleContent>
+        </Collapsible>
+        </div>
       </Card>
 
-      <div className="space-y-3">
-        <h2 className="font-semibold">Технічна карта</h2>
+      <div>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">Послідовність робіт</p>
+            <h2 className="text-lg font-bold">Етапи партії</h2>
+          </div>
+          <Badge variant="outline"><CalendarDays className="mr-1 h-3.5 w-3.5" />{defs.length} етапів</Badge>
+        </div>
+        <div className="relative space-y-0 before:absolute before:bottom-6 before:left-[17px] before:top-6 before:w-px before:bg-border sm:before:left-[21px]">
         {defs.map((def, i) => {
           const row = steps?.find((s: any) => s.step_key === def.key);
-          return <StepCard key={def.key} n={i + 1} def={def} row={row} batch={batch} onChange={refresh} />;
+          return <StepCard key={def.key} n={i + 1} def={def} row={row} batch={batch} accent={scenario.bar} onChange={refresh} />;
         })}
+        </div>
       </div>
 
       <Collapsible>
@@ -272,12 +316,14 @@ function StepCard({
   def,
   row,
   batch,
+  accent,
   onChange,
 }: {
   n: number;
   def: StepDef;
   row: any;
   batch: any;
+  accent: string;
   onChange: () => void;
 }) {
   const [saving, setSaving] = useState(false);
@@ -293,44 +339,46 @@ function StepCard({
 
   const planned = row?.planned_on ?? addDays(batch.grafted_on, def.dayFrom);
   const done = !!row?.done;
-  const isPast = planned <= today();
+  const isPast = planned < today();
+  const isToday = planned === today();
 
   return (
-    <Card className={`p-4 ${def.critical ? "border-destructive/60" : ""}`}>
-      <div className="flex items-start gap-3">
-        <div className="w-7 h-7 shrink-0 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-sm font-bold">
-          {n}
+    <div className="relative flex gap-3 pb-4 sm:gap-4">
+        <div className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-4 border-background text-sm font-bold sm:h-11 sm:w-11 ${done ? `${accent} text-primary-foreground` : isPast || isToday ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+          {done ? <Check className="h-4 w-4" /> : n}
         </div>
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="font-semibold leading-snug">{def.title}</div>
-          <div className="flex flex-wrap items-center gap-1">
-            <Badge variant="outline">{dayLabel(def)}</Badge>
-            <Badge variant="secondary">{planned}</Badge>
-            <Badge variant={done ? "default" : isPast ? "destructive" : "outline"}>
-              {done ? "Виконано" : isPast ? "Пора виконати" : "Заплановано"}
+        <Card className={`min-w-0 flex-1 p-3 sm:p-4 ${def.critical ? "border-destructive/60" : isToday ? "border-primary/60" : ""}`}>
+          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+            <div className="font-semibold leading-snug">{n}. {def.title}</div>
+            <Badge variant={done ? "default" : isPast ? "destructive" : isToday ? "secondary" : "outline"} className="w-fit shrink-0">
+              {done ? "Виконано" : isPast ? "Прострочено" : isToday ? "Сьогодні" : "За планом"}
             </Badge>
           </div>
+          <div className="mt-2 flex flex-wrap items-center gap-1">
+            <Badge variant="outline">{dayLabel(def)}</Badge>
+            <Badge variant="secondary"><CalendarDays className="mr-1 h-3 w-3" />{planned}</Badge>
+          </div>
 
-          <div className="text-xs flex items-start gap-1 text-muted-foreground">
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-muted p-2 text-xs text-muted-foreground">
             <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0" />
             <span>{def.advice}</span>
           </div>
 
           {def.warning ? (
             def.critical ? (
-              <div className="rounded-md border border-destructive bg-destructive/10 p-2 text-xs text-destructive flex items-start gap-1">
+              <div className="mt-2 flex items-start gap-2 rounded-md border border-destructive bg-destructive/10 p-3 text-xs text-destructive">
                 <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>{def.warning}</span>
               </div>
             ) : (
-              <div className="text-xs flex items-start gap-1 text-muted-foreground">
+              <div className="mt-2 flex items-start gap-2 rounded-md border bg-secondary/50 p-2 text-xs text-foreground">
                 <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                 <span>{def.warning}</span>
               </div>
             )
           ) : null}
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <div>
               <Label className="text-xs">Планова дата</Label>
               <Input
@@ -351,7 +399,7 @@ function StepCard({
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm">
+          <label className="mt-3 flex items-center gap-2 rounded-md border p-2 text-sm font-medium">
             <Checkbox
               checked={done}
               disabled={!row || saving}
@@ -360,20 +408,19 @@ function StepCard({
             Відмітити виконання
           </label>
 
-          <div>
+          <div className="mt-3">
             <Label className="text-xs">Примітка</Label>
             <NoteField value={row?.actual_note} onSave={(v) => patch({ actual_note: v })} />
           </div>
 
           {def.acceptance ? (
-            <div className="rounded-md bg-secondary p-2 text-xs">
+            <div className="mt-3 rounded-md bg-secondary p-2 text-xs">
               Фактично прийнято личинок вводиться у блоці даних партії вище — значення можна коригувати пізніше, зміни
               зберігаються в історії.
             </div>
           ) : null}
-        </div>
-      </div>
-    </Card>
+        </Card>
+    </div>
   );
 }
 
