@@ -22,12 +22,13 @@ import {
   plannedDates,
   statusLabel,
   suggestedStatus,
+  stepDateLabel,
   addDays,
   type QueenMethod,
   type QueenNextAction,
   type StepDef,
 } from "@/lib/queens";
-import { createStepsFor } from "./_app.queens.index";
+import { createStepsFor, nextActionOf } from "./_app.queens.index";
 
 export const Route = createFileRoute("/_app/queens/$batchId")({
   head: () => ({
@@ -45,12 +46,10 @@ export const Route = createFileRoute("/_app/queens/$batchId")({
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-const SCENARIO_STYLE = {
-  "comb-cells": { bar: "bg-chart-2", soft: "bg-chart-2/10", border: "border-chart-2/40" },
-  "comb-protectors": { bar: "bg-chart-1", soft: "bg-chart-1/10", border: "border-chart-1/40" },
-  "transfer-cells": { bar: "bg-chart-3", soft: "bg-chart-3/10", border: "border-chart-3/40" },
-  "transfer-protectors": { bar: "bg-chart-4", soft: "bg-chart-4/10", border: "border-chart-4/40" },
-} as const;
+const METHOD_STYLE: Record<QueenMethod, { bar: string; soft: string; border: string }> = {
+  comb: { bar: "bg-chart-2", soft: "bg-chart-2/10", border: "border-chart-2/40" },
+  transfer: { bar: "bg-chart-3", soft: "bg-chart-3/10", border: "border-chart-3/40" },
+};
 
 function BatchPage() {
   const { batchId } = Route.useParams();
