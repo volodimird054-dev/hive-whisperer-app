@@ -1,5 +1,5 @@
 export type QueenMethod = "comb" | "transfer";
-export type QueenNextAction = "cells" | "protectors";
+export type QueenNextAction = "cells" | "protectors" | "undecided";
 
 export const METHOD_LABEL: Record<QueenMethod, string> = {
   comb: "Сот",
@@ -9,6 +9,7 @@ export const METHOD_LABEL: Record<QueenMethod, string> = {
 export const NEXT_ACTION_LABEL: Record<QueenNextAction, string> = {
   cells: "Відбір маточників",
   protectors: "Вдягання бігудішок",
+  undecided: "Дію ще не обрано",
 };
 
 export const QUEEN_STATUSES = [
@@ -20,6 +21,7 @@ export const QUEEN_STATUSES = [
   { value: "moved_to_nurse", label: "Переставлено у виховательку" },
   { value: "developing", label: "Розвивається" },
   { value: "needs_quiet", label: "Потрібна тиша та спокій" },
+  { value: "ready_decision", label: "Готово до вибору дії" },
   { value: "ready_cells", label: "Готово до відбору" },
   { value: "ready_protectors", label: "Готово до вдягання бігудішок" },
   { value: "cells_taken", label: "Маточники відібрано" },
