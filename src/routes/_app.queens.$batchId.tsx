@@ -191,7 +191,7 @@ function BatchPage() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-medium uppercase text-muted-foreground">Технічна карта</p>
-              <h2 className="mt-1 font-bold">{METHOD_LABEL[method]} → {NEXT_ACTION_LABEL[nextAction]}</h2>
+              <h2 className="mt-1 font-bold">{scenarioTitle}</h2>
               <p className="mt-1 text-xs text-muted-foreground">Початок {batch.grafted_on} · виконано {completedCount} з {defs.length} етапів</p>
             </div>
             <Badge variant="secondary">{statusLabel(batch.status)}</Badge>
