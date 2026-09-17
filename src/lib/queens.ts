@@ -1,5 +1,5 @@
 export type QueenMethod = "comb" | "transfer";
-export type QueenNextAction = "cells" | "protectors";
+export type QueenNextAction = "cells" | "protectors" | "undecided";
 
 export const METHOD_LABEL: Record<QueenMethod, string> = {
   comb: "Сот",
@@ -9,6 +9,7 @@ export const METHOD_LABEL: Record<QueenMethod, string> = {
 export const NEXT_ACTION_LABEL: Record<QueenNextAction, string> = {
   cells: "Відбір маточників",
   protectors: "Вдягання бігудішок",
+  undecided: "Дію ще не обрано",
 };
 
 export const QUEEN_STATUSES = [
@@ -20,6 +21,7 @@ export const QUEEN_STATUSES = [
   { value: "moved_to_nurse", label: "Переставлено у виховательку" },
   { value: "developing", label: "Розвивається" },
   { value: "needs_quiet", label: "Потрібна тиша та спокій" },
+  { value: "ready_decision", label: "Готово до вибору дії" },
   { value: "ready_cells", label: "Готово до відбору" },
   { value: "ready_protectors", label: "Готово до вдягання бігудішок" },
   { value: "cells_taken", label: "Маточники відібрано" },
@@ -48,7 +50,10 @@ export type StepDef = {
   mainAction?: boolean;
   /** крок виходу маток */
   emergence?: boolean;
+  /** крок вибору: забираємо маточники або вдягаємо бігудішки */
+  decision?: boolean;
 };
+
 
 export function addDays(date: string, n: number) {
   const d = new Date(`${date}T00:00:00`);
@@ -61,6 +66,26 @@ export function dayLabel(s: StepDef) {
     ? `День ${s.dayFrom}–${s.dayTo}`
     : `День ${s.dayFrom}`;
 }
+
+/** Конкретні дати етапу, розраховані від дати початку партії. */
+export function stepDates(s: StepDef, start: string) {
+  const from = addDays(start, s.dayFrom);
+  const to = s.dayTo != null && s.dayTo !== s.dayFrom ? addDays(start, s.dayTo) : null;
+  return { from, to };
+}
+
+/** Підпис із розрахованими датами етапу, напр. «12.05 – 15.05». */
+export function stepDateLabel(s: StepDef, start: string) {
+  const { from, to } = stepDates(s, start);
+  const fmt = (d: string) => d.slice(8, 10) + "." + d.slice(5, 7) + "." + d.slice(0, 4);
+  return to ? `${fmt(from)} – ${fmt(to)}` : fmt(from);
+}
+
+export const DECISION_STEP_ADVICE =
+  "Оберіть, що робимо з маточниками саме сьогодні: забрати зрілі маточники або вдягнути захисні бігудішки й чекати виходу неплідних маток. Після вибору технічна карта доповниться відповідними етапами.";
+
+export const DECISION_STEP_WARNING =
+  "КРИТИЧНО: це останній безпечний день. Якщо не забрати маточники й не вдягнути бігудішки, перша матка, що вийде, знищить решту маточників і зіпсує всю партію.";
 
 const QUIET_WARNING =
   "Потрібні спокій і тиша: не турбувати виховательку, не розбирати гніздо, не трясти рамки з маточниками.";
@@ -114,6 +139,18 @@ export function buildStepDefs(method: QueenMethod, nextAction: QueenNextAction):
       },
       { key: "quiet", title: "Період спокою та тиші", dayFrom: 10, dayTo: 13, advice: "Лише зовнішній огляд.", warning: QUIET_WARNING },
     ];
+    if (nextAction === "undecided") {
+      steps.push({
+        key: "decision",
+        title: "Що робимо з маточниками?",
+        dayFrom: 14,
+        advice: DECISION_STEP_ADVICE,
+        warning: DECISION_STEP_WARNING,
+        critical: true,
+        decision: true,
+      });
+      return steps;
+    }
     if (nextAction === "cells") {
       steps.push({
         key: "harvest",
@@ -176,6 +213,18 @@ export function buildStepDefs(method: QueenMethod, nextAction: QueenNextAction):
     },
     { key: "quiet", title: "Період спокою та тиші", dayFrom: 6, dayTo: 9, advice: "Лише зовнішній огляд.", warning: QUIET_WARNING },
   ];
+  if (nextAction === "undecided") {
+    steps.push({
+      key: "decision",
+      title: "Що робимо з маточниками?",
+      dayFrom: 10,
+      advice: DECISION_STEP_ADVICE,
+      warning: DECISION_STEP_WARNING,
+      critical: true,
+      decision: true,
+    });
+    return steps;
+  }
   if (nextAction === "cells") {
     steps.push({
       key: "harvest",
@@ -252,6 +301,7 @@ export function suggestedStatus(
   if (d === check) return "awaiting_acceptance";
   if (d < quietFrom) return "developing";
   if (d < action) return "needs_quiet";
+  if (d >= action && nextAction === "undecided") return "ready_decision";
   if (d === action) return nextAction === "cells" ? "ready_cells" : "ready_protectors";
   return nextAction === "cells" ? "cells_taken" : "awaiting_emergence";
 }

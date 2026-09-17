@@ -22,12 +22,13 @@ import {
   plannedDates,
   statusLabel,
   suggestedStatus,
+  stepDateLabel,
   addDays,
   type QueenMethod,
   type QueenNextAction,
   type StepDef,
 } from "@/lib/queens";
-import { createStepsFor } from "./_app.queens.index";
+import { createStepsFor, nextActionOf } from "./_app.queens.index";
 
 export const Route = createFileRoute("/_app/queens/$batchId")({
   head: () => ({
@@ -45,12 +46,10 @@ export const Route = createFileRoute("/_app/queens/$batchId")({
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-const SCENARIO_STYLE = {
-  "comb-cells": { bar: "bg-chart-2", soft: "bg-chart-2/10", border: "border-chart-2/40" },
-  "comb-protectors": { bar: "bg-chart-1", soft: "bg-chart-1/10", border: "border-chart-1/40" },
-  "transfer-cells": { bar: "bg-chart-3", soft: "bg-chart-3/10", border: "border-chart-3/40" },
-  "transfer-protectors": { bar: "bg-chart-4", soft: "bg-chart-4/10", border: "border-chart-4/40" },
-} as const;
+const METHOD_STYLE: Record<QueenMethod, { bar: string; soft: string; border: string }> = {
+  comb: { bar: "bg-chart-2", soft: "bg-chart-2/10", border: "border-chart-2/40" },
+  transfer: { bar: "bg-chart-3", soft: "bg-chart-3/10", border: "border-chart-3/40" },
+};
 
 function BatchPage() {
   const { batchId } = Route.useParams();
@@ -93,10 +92,10 @@ function BatchPage() {
   }
 
   const method: QueenMethod = (batch.method ?? "comb") as QueenMethod;
-  const nextAction: QueenNextAction = (batch.next_action ?? "cells") as QueenNextAction;
+  const nextAction: QueenNextAction = nextActionOf(batch);
   const defs = buildStepDefs(method, nextAction);
   const suggested = suggestedStatus(method, nextAction, batch.grafted_on);
-  const scenario = SCENARIO_STYLE[`${method}-${nextAction}`];
+  const scenario = METHOD_STYLE[method] ?? METHOD_STYLE.comb;
   const completedCount = steps?.filter((step: any) => step.done).length ?? 0;
 
   const refresh = () => {
@@ -140,6 +139,36 @@ function BatchPage() {
     refresh();
   }
 
+  const scenarioTitle =
+    nextAction === "undecided"
+      ? `${METHOD_LABEL[method]} — дію оберете на день дії`
+      : `${METHOD_LABEL[method]} → ${NEXT_ACTION_LABEL[nextAction]}`;
+
+  /** Вибір дії на день дії: відбір маточників або бігудішки. */
+  async function chooseAction(value: QueenNextAction | null) {
+    await logEvent("next_action", batch.next_action, value);
+    const { error } = await supabase.from("queen_batches").update({ next_action: value }).eq("id", batchId);
+    if (error) return toast.error(error.message);
+    const nextDefs = buildStepDefs(method, value ?? "undecided");
+    const rows = nextDefs.map((d, i) => ({
+      batch_id: batchId,
+      user_id: batch.user_id,
+      step_key: d.key,
+      day_offset: d.dayFrom,
+      planned_on: addDays(batch.grafted_on, d.dayFrom),
+      sort_order: i,
+    }));
+    await supabase.from("queen_batch_steps").upsert(rows, { onConflict: "batch_id,step_key" });
+    if (value) {
+      await supabase
+        .from("queen_batches")
+        .update({ status: value === "cells" ? "ready_cells" : "ready_protectors" })
+        .eq("id", batchId);
+    }
+    toast.success(value ? "Дію обрано — карту доповнено" : "Рішення скасовано");
+    refresh();
+  }
+
   return (
     <div className="space-y-5 lg:relative lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-w-5xl lg:-translate-x-1/2">
       <div className="flex items-center gap-2">
@@ -151,7 +180,7 @@ function BatchPage() {
         <div className="min-w-0">
           <h1 className="truncate text-xl font-bold">{batch.name}</h1>
           <div className="text-xs text-muted-foreground">
-            {METHOD_LABEL[method]} → {NEXT_ACTION_LABEL[nextAction]} · старт {batch.grafted_on}
+            {scenarioTitle} · старт {batch.grafted_on}
           </div>
         </div>
       </div>
@@ -162,7 +191,7 @@ function BatchPage() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-medium uppercase text-muted-foreground">Технічна карта</p>
-              <h2 className="mt-1 font-bold">{METHOD_LABEL[method]} → {NEXT_ACTION_LABEL[nextAction]}</h2>
+              <h2 className="mt-1 font-bold">{scenarioTitle}</h2>
               <p className="mt-1 text-xs text-muted-foreground">Початок {batch.grafted_on} · виконано {completedCount} з {defs.length} етапів</p>
             </div>
             <Badge variant="secondary">{statusLabel(batch.status)}</Badge>
