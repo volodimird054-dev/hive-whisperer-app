@@ -180,7 +180,7 @@ function BatchPage() {
         <div className="min-w-0">
           <h1 className="truncate text-xl font-bold">{batch.name}</h1>
           <div className="text-xs text-muted-foreground">
-            {METHOD_LABEL[method]} → {NEXT_ACTION_LABEL[nextAction]} · старт {batch.grafted_on}
+            {scenarioTitle} · старт {batch.grafted_on}
           </div>
         </div>
       </div>
