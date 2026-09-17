@@ -301,6 +301,7 @@ export function suggestedStatus(
   if (d === check) return "awaiting_acceptance";
   if (d < quietFrom) return "developing";
   if (d < action) return "needs_quiet";
+  if (d >= action && nextAction === "undecided") return "ready_decision";
   if (d === action) return nextAction === "cells" ? "ready_cells" : "ready_protectors";
   return nextAction === "cells" ? "cells_taken" : "awaiting_emergence";
 }
