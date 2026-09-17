@@ -67,6 +67,26 @@ export function dayLabel(s: StepDef) {
     : `День ${s.dayFrom}`;
 }
 
+/** Конкретні дати етапу, розраховані від дати початку партії. */
+export function stepDates(s: StepDef, start: string) {
+  const from = addDays(start, s.dayFrom);
+  const to = s.dayTo != null && s.dayTo !== s.dayFrom ? addDays(start, s.dayTo) : null;
+  return { from, to };
+}
+
+/** Підпис із розрахованими датами етапу, напр. «12.05 – 15.05». */
+export function stepDateLabel(s: StepDef, start: string) {
+  const { from, to } = stepDates(s, start);
+  const fmt = (d: string) => d.slice(8, 10) + "." + d.slice(5, 7) + "." + d.slice(0, 4);
+  return to ? `${fmt(from)} – ${fmt(to)}` : fmt(from);
+}
+
+export const DECISION_STEP_ADVICE =
+  "Оберіть, що робимо з маточниками саме сьогодні: забрати зрілі маточники або вдягнути захисні бігудішки й чекати виходу неплідних маток. Після вибору технічна карта доповниться відповідними етапами.";
+
+export const DECISION_STEP_WARNING =
+  "КРИТИЧНО: це останній безпечний день. Якщо не забрати маточники й не вдягнути бігудішки, перша матка, що вийде, знищить решту маточників і зіпсує всю партію.";
+
 const QUIET_WARNING =
   "Потрібні спокій і тиша: не турбувати виховательку, не розбирати гніздо, не трясти рамки з маточниками.";
 
