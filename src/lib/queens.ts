@@ -213,6 +213,18 @@ export function buildStepDefs(method: QueenMethod, nextAction: QueenNextAction):
     },
     { key: "quiet", title: "Період спокою та тиші", dayFrom: 6, dayTo: 9, advice: "Лише зовнішній огляд.", warning: QUIET_WARNING },
   ];
+  if (nextAction === "undecided") {
+    steps.push({
+      key: "decision",
+      title: "Що робимо з маточниками?",
+      dayFrom: 10,
+      advice: DECISION_STEP_ADVICE,
+      warning: DECISION_STEP_WARNING,
+      critical: true,
+      decision: true,
+    });
+    return steps;
+  }
   if (nextAction === "cells") {
     steps.push({
       key: "harvest",
