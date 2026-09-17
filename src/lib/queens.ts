@@ -50,7 +50,10 @@ export type StepDef = {
   mainAction?: boolean;
   /** крок виходу маток */
   emergence?: boolean;
+  /** крок вибору: забираємо маточники або вдягаємо бігудішки */
+  decision?: boolean;
 };
+
 
 export function addDays(date: string, n: number) {
   const d = new Date(`${date}T00:00:00`);
