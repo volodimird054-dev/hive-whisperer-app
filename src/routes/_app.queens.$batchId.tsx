@@ -92,10 +92,10 @@ function BatchPage() {
   }
 
   const method: QueenMethod = (batch.method ?? "comb") as QueenMethod;
-  const nextAction: QueenNextAction = (batch.next_action ?? "cells") as QueenNextAction;
+  const nextAction: QueenNextAction = nextActionOf(batch);
   const defs = buildStepDefs(method, nextAction);
   const suggested = suggestedStatus(method, nextAction, batch.grafted_on);
-  const scenario = SCENARIO_STYLE[`${method}-${nextAction}`];
+  const scenario = METHOD_STYLE[method] ?? METHOD_STYLE.comb;
   const completedCount = steps?.filter((step: any) => step.done).length ?? 0;
 
   const refresh = () => {
