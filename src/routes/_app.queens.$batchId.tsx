@@ -139,6 +139,36 @@ function BatchPage() {
     refresh();
   }
 
+  const scenarioTitle =
+    nextAction === "undecided"
+      ? `${METHOD_LABEL[method]} — дію оберете на день дії`
+      : `${METHOD_LABEL[method]} → ${NEXT_ACTION_LABEL[nextAction]}`;
+
+  /** Вибір дії на день дії: відбір маточників або бігудішки. */
+  async function chooseAction(value: QueenNextAction | null) {
+    await logEvent("next_action", batch.next_action, value);
+    const { error } = await supabase.from("queen_batches").update({ next_action: value }).eq("id", batchId);
+    if (error) return toast.error(error.message);
+    const nextDefs = buildStepDefs(method, value ?? "undecided");
+    const rows = nextDefs.map((d, i) => ({
+      batch_id: batchId,
+      user_id: batch.user_id,
+      step_key: d.key,
+      day_offset: d.dayFrom,
+      planned_on: addDays(batch.grafted_on, d.dayFrom),
+      sort_order: i,
+    }));
+    await supabase.from("queen_batch_steps").upsert(rows, { onConflict: "batch_id,step_key" });
+    if (value) {
+      await supabase
+        .from("queen_batches")
+        .update({ status: value === "cells" ? "ready_cells" : "ready_protectors" })
+        .eq("id", batchId);
+    }
+    toast.success(value ? "Дію обрано — карту доповнено" : "Рішення скасовано");
+    refresh();
+  }
+
   return (
     <div className="space-y-5 lg:relative lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-w-5xl lg:-translate-x-1/2">
       <div className="flex items-center gap-2">
