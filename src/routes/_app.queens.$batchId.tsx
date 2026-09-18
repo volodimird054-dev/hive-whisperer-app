@@ -252,12 +252,12 @@ function BatchPage() {
           <PlanField label="Перестановка у виховательку" value={batch.nurse_on} onSave={(v) => patchBatch({ nurse_on: v })} />
           <PlanField label="Запечатування (розрахунок)" value={batch.sealed_on} onSave={(v) => patchBatch({ sealed_on: v })} />
           <PlanField
-            label={`${NEXT_ACTION_LABEL[nextAction]} (план)`}
+            label={nextAction === "undecided" ? "День дії (план)" : `${NEXT_ACTION_LABEL[nextAction]} (план)`}
             value={batch.next_action_planned_on}
             onSave={(v) => patchBatch({ next_action_planned_on: v })}
           />
           <PlanField
-            label={`${NEXT_ACTION_LABEL[nextAction]} (факт)`}
+            label={nextAction === "undecided" ? "День дії (факт)" : `${NEXT_ACTION_LABEL[nextAction]} (факт)`}
             value={batch.next_action_done_on}
             onSave={(v) => patchBatch({ next_action_done_on: v }, ["next_action_done_on"])}
           />
