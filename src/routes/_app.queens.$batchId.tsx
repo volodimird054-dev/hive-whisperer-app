@@ -145,10 +145,13 @@ function BatchPage() {
       : `${METHOD_LABEL[method]} → ${NEXT_ACTION_LABEL[nextAction]}`;
 
   /** Вибір дії на день дії: відбір маточників або бігудішки. */
-  async function chooseAction(value: QueenNextAction | null) {
+  async function chooseAction(value: QueenNextAction | null): Promise<void> {
     await logEvent("next_action", batch.next_action, value);
     const { error } = await supabase.from("queen_batches").update({ next_action: value }).eq("id", batchId);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     const nextDefs = buildStepDefs(method, value ?? "undecided");
     const rows = nextDefs.map((d, i) => ({
       batch_id: batchId,
@@ -252,12 +255,12 @@ function BatchPage() {
           <PlanField label="Перестановка у виховательку" value={batch.nurse_on} onSave={(v) => patchBatch({ nurse_on: v })} />
           <PlanField label="Запечатування (розрахунок)" value={batch.sealed_on} onSave={(v) => patchBatch({ sealed_on: v })} />
           <PlanField
-            label={`${NEXT_ACTION_LABEL[nextAction]} (план)`}
+            label={nextAction === "undecided" ? "День дії (план)" : `${NEXT_ACTION_LABEL[nextAction]} (план)`}
             value={batch.next_action_planned_on}
             onSave={(v) => patchBatch({ next_action_planned_on: v })}
           />
           <PlanField
-            label={`${NEXT_ACTION_LABEL[nextAction]} (факт)`}
+            label={nextAction === "undecided" ? "День дії (факт)" : `${NEXT_ACTION_LABEL[nextAction]} (факт)`}
             value={batch.next_action_done_on}
             onSave={(v) => patchBatch({ next_action_done_on: v }, ["next_action_done_on"])}
           />
@@ -299,7 +302,19 @@ function BatchPage() {
         <div className="relative space-y-0 before:absolute before:bottom-6 before:left-[17px] before:top-6 before:w-px before:bg-border sm:before:left-[21px]">
         {defs.map((def, i) => {
           const row = steps?.find((s: any) => s.step_key === def.key);
-          return <StepCard key={def.key} n={i + 1} def={def} row={row} batch={batch} accent={scenario.bar} onChange={refresh} />;
+          return (
+            <StepCard
+              key={def.key}
+              n={i + 1}
+              def={def}
+              row={row}
+              batch={batch}
+              accent={scenario.bar}
+              nextAction={nextAction}
+              onDecide={chooseAction}
+              onChange={refresh}
+            />
+          );
         })}
         </div>
       </div>
@@ -346,6 +361,8 @@ function StepCard({
   row,
   batch,
   accent,
+  nextAction,
+  onDecide,
   onChange,
 }: {
   n: number;
@@ -353,6 +370,8 @@ function StepCard({
   row: any;
   batch: any;
   accent: string;
+  nextAction: QueenNextAction;
+  onDecide: (v: QueenNextAction | null) => Promise<void>;
   onChange: () => void;
 }) {
   const [saving, setSaving] = useState(false);
@@ -385,7 +404,10 @@ function StepCard({
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-1">
             <Badge variant="outline">{dayLabel(def)}</Badge>
-            <Badge variant="secondary"><CalendarDays className="mr-1 h-3 w-3" />{planned}</Badge>
+            <Badge variant="secondary"><CalendarDays className="mr-1 h-3 w-3" />{stepDateLabel(def, batch.grafted_on)}</Badge>
+            {row?.planned_on && row.planned_on !== addDays(batch.grafted_on, def.dayFrom) ? (
+              <Badge variant="outline">план змінено: {row.planned_on}</Badge>
+            ) : null}
           </div>
 
           <div className="mt-3 flex items-start gap-2 rounded-md bg-muted p-2 text-xs text-muted-foreground">
@@ -407,6 +429,25 @@ function StepCard({
             )
           ) : null}
 
+          {def.decision ? (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <Button className="h-auto py-3" onClick={() => onDecide("cells")}>
+                Відібрати маточники
+              </Button>
+              <Button variant="secondary" className="h-auto py-3" onClick={() => onDecide("protectors")}>
+                Вдягнути бігудішки
+              </Button>
+            </div>
+          ) : null}
+
+          {def.mainAction && nextAction !== "undecided" && !batch.next_action_done_on ? (
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => onDecide(null)}>
+              Змінити рішення
+            </Button>
+          ) : null}
+
+          {!def.decision ? (
+            <>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <div>
               <Label className="text-xs">Планова дата</Label>
@@ -441,6 +482,8 @@ function StepCard({
             <Label className="text-xs">Примітка</Label>
             <NoteField value={row?.actual_note} onSave={(v) => patch({ actual_note: v })} />
           </div>
+            </>
+          ) : null}
 
           {def.acceptance ? (
             <div className="mt-3 rounded-md bg-secondary p-2 text-xs">
