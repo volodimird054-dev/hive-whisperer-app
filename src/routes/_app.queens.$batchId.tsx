@@ -443,6 +443,8 @@ function StepCard({
             </Button>
           ) : null}
 
+          {!def.decision ? (
+            <>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <div>
               <Label className="text-xs">Планова дата</Label>
@@ -477,6 +479,8 @@ function StepCard({
             <Label className="text-xs">Примітка</Label>
             <NoteField value={row?.actual_note} onSave={(v) => patch({ actual_note: v })} />
           </div>
+            </>
+          ) : null}
 
           {def.acceptance ? (
             <div className="mt-3 rounded-md bg-secondary p-2 text-xs">
