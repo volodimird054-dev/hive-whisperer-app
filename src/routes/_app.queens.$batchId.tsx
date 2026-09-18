@@ -358,6 +358,8 @@ function StepCard({
   row,
   batch,
   accent,
+  nextAction,
+  onDecide,
   onChange,
 }: {
   n: number;
@@ -365,6 +367,8 @@ function StepCard({
   row: any;
   batch: any;
   accent: string;
+  nextAction: QueenNextAction;
+  onDecide: (v: QueenNextAction | null) => Promise<void>;
   onChange: () => void;
 }) {
   const [saving, setSaving] = useState(false);
