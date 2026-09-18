@@ -145,10 +145,13 @@ function BatchPage() {
       : `${METHOD_LABEL[method]} → ${NEXT_ACTION_LABEL[nextAction]}`;
 
   /** Вибір дії на день дії: відбір маточників або бігудішки. */
-  async function chooseAction(value: QueenNextAction | null) {
+  async function chooseAction(value: QueenNextAction | null): Promise<void> {
     await logEvent("next_action", batch.next_action, value);
     const { error } = await supabase.from("queen_batches").update({ next_action: value }).eq("id", batchId);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     const nextDefs = buildStepDefs(method, value ?? "undecided");
     const rows = nextDefs.map((d, i) => ({
       batch_id: batchId,
