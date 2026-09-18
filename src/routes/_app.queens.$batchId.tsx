@@ -401,7 +401,10 @@ function StepCard({
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-1">
             <Badge variant="outline">{dayLabel(def)}</Badge>
-            <Badge variant="secondary"><CalendarDays className="mr-1 h-3 w-3" />{planned}</Badge>
+            <Badge variant="secondary"><CalendarDays className="mr-1 h-3 w-3" />{stepDateLabel(def, batch.grafted_on)}</Badge>
+            {row?.planned_on && row.planned_on !== addDays(batch.grafted_on, def.dayFrom) ? (
+              <Badge variant="outline">план змінено: {row.planned_on}</Badge>
+            ) : null}
           </div>
 
           <div className="mt-3 flex items-start gap-2 rounded-md bg-muted p-2 text-xs text-muted-foreground">
