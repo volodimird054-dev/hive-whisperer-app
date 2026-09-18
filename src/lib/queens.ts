@@ -305,3 +305,48 @@ export function suggestedStatus(
   if (d === action) return nextAction === "cells" ? "ready_cells" : "ready_protectors";
   return nextAction === "cells" ? "cells_taken" : "awaiting_emergence";
 }
+
+export function nextActionOf(batch: { next_action?: string | null } | null | undefined): QueenNextAction {
+  const value = batch?.next_action;
+  return value === "cells" || value === "protectors" ? value : "undecided";
+}
+
+export function automaticQueenStatus({
+  method,
+  nextAction,
+  start,
+  steps,
+  currentStatus,
+}: {
+  method: QueenMethod;
+  nextAction: QueenNextAction;
+  start: string;
+  steps?: Array<{ step_key: string | null; done: boolean | null }> | null;
+  currentStatus?: string | null;
+}) {
+  if (currentStatus === "cancelled") return "cancelled";
+  const defs = buildStepDefs(method, nextAction).filter((def) => !def.decision);
+  const allDone = defs.length > 0 && defs.every((def) => steps?.some((step) => step.step_key === def.key && step.done));
+  if (allDone) return "finished";
+  return suggestedStatus(method, nextAction, start);
+}
+
+export function currentQueenStepIndex({
+  defs,
+  steps,
+  start,
+}: {
+  defs: StepDef[];
+  steps?: Array<{ step_key: string | null; done: boolean | null }> | null;
+  start: string;
+}) {
+  if (!defs.length) return -1;
+  const todayString = new Date().toISOString().slice(0, 10);
+  const due = defs.findIndex((def) => {
+    const row = steps?.find((step) => step.step_key === def.key);
+    return !row?.done && addDays(start, def.dayFrom) <= todayString;
+  });
+  if (due >= 0) return due;
+  const next = defs.findIndex((def) => !steps?.find((step) => step.step_key === def.key)?.done);
+  return next >= 0 ? next : defs.length - 1;
+}
