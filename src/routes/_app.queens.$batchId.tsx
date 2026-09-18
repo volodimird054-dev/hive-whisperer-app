@@ -299,7 +299,19 @@ function BatchPage() {
         <div className="relative space-y-0 before:absolute before:bottom-6 before:left-[17px] before:top-6 before:w-px before:bg-border sm:before:left-[21px]">
         {defs.map((def, i) => {
           const row = steps?.find((s: any) => s.step_key === def.key);
-          return <StepCard key={def.key} n={i + 1} def={def} row={row} batch={batch} accent={scenario.bar} onChange={refresh} />;
+          return (
+            <StepCard
+              key={def.key}
+              n={i + 1}
+              def={def}
+              row={row}
+              batch={batch}
+              accent={scenario.bar}
+              nextAction={nextAction}
+              onDecide={chooseAction}
+              onChange={refresh}
+            />
+          );
         })}
         </div>
       </div>
