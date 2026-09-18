@@ -426,6 +426,23 @@ function StepCard({
             )
           ) : null}
 
+          {def.decision ? (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <Button className="h-auto py-3" onClick={() => onDecide("cells")}>
+                Відібрати маточники
+              </Button>
+              <Button variant="secondary" className="h-auto py-3" onClick={() => onDecide("protectors")}>
+                Вдягнути бігудішки
+              </Button>
+            </div>
+          ) : null}
+
+          {def.mainAction && nextAction !== "undecided" && !batch.next_action_done_on ? (
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => onDecide(null)}>
+              Змінити рішення
+            </Button>
+          ) : null}
+
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <div>
               <Label className="text-xs">Планова дата</Label>
