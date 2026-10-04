@@ -325,9 +325,22 @@ export function automaticQueenStatus({
   currentStatus?: string | null;
 }) {
   if (currentStatus === "cancelled") return "cancelled";
-  const defs = buildStepDefs(method, nextAction).filter((def) => !def.decision);
-  const allDone = defs.length > 0 && defs.every((def) => steps?.some((step) => step.step_key === def.key && step.done));
+  const defs = buildStepDefs(method, nextAction);
+  const actionableDefs = defs.filter((def) => !def.decision);
+  const allDone = actionableDefs.length > 0 && actionableDefs.every((def) => steps?.some((step) => step.step_key === def.key && step.done));
   if (allDone) return "finished";
+  const current = defs.find((def) => !steps?.find((step) => step.step_key === def.key)?.done);
+  if (current) {
+    if (current.decision) return "ready_decision";
+    if (current.key === "acceptance") return "awaiting_acceptance";
+    if (current.key === "develop") return "developing";
+    if (current.key === "quiet") return "needs_quiet";
+    if (current.key === "harvest") return "ready_cells";
+    if (current.key === "protectors") return "ready_protectors";
+    if (current.key === "emergence") return "awaiting_emergence";
+    if (current.key === "intro") return "queens_done";
+    return "in_progress";
+  }
   return suggestedStatus(method, nextAction, start);
 }
 

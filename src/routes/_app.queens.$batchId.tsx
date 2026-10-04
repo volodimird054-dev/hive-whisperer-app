@@ -8,27 +8,27 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ArrowLeft, AlertTriangle, CalendarDays, Check, ChevronDown, Lightbulb, History, Info } from "lucide-react";
+import { ArrowLeft, AlertTriangle, CalendarDays, Check, ChevronDown, Lightbulb, History } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   METHOD_LABEL,
   NEXT_ACTION_LABEL,
-  QUEEN_STATUSES,
   buildStepDefs,
+  automaticQueenStatus,
+  currentQueenStepIndex,
   dayLabel,
   plannedDates,
   statusLabel,
-  suggestedStatus,
   stepDateLabel,
   addDays,
   type QueenMethod,
   type QueenNextAction,
   type StepDef,
 } from "@/lib/queens";
-import { createStepsFor, nextActionOf } from "./_app.queens.index";
+import { nextActionOf } from "@/lib/queens";
+import { createStepsFor } from "@/lib/queen-steps";
 
 export const Route = createFileRoute("/_app/queens/$batchId")({
   head: () => ({
@@ -94,11 +94,32 @@ function BatchPage() {
   const method: QueenMethod = (batch.method ?? "comb") as QueenMethod;
   const nextAction: QueenNextAction = nextActionOf(batch);
   const defs = buildStepDefs(method, nextAction);
-  const suggested = suggestedStatus(method, nextAction, batch.grafted_on);
   const scenario = METHOD_STYLE[method] ?? METHOD_STYLE.comb;
   const completedCount = steps?.filter((step: any) => step.done).length ?? 0;
+  const currentStepIndex = currentQueenStepIndex({ defs, steps, start: batch.grafted_on });
+  const automaticStatus = automaticQueenStatus({
+    method,
+    nextAction,
+    start: batch.grafted_on,
+    steps,
+    currentStatus: batch.status,
+  });
 
-  const refresh = () => {
+  const refresh = async () => {
+    const { data: latestSteps } = await supabase
+      .from("queen_batch_steps")
+      .select("step_key,done")
+      .eq("batch_id", batchId);
+    const nextStatus = automaticQueenStatus({
+      method,
+      nextAction,
+      start: batch.grafted_on,
+      steps: latestSteps,
+      currentStatus: batch.status,
+    });
+    if (batch.status !== nextStatus) {
+      await supabase.from("queen_batches").update({ status: nextStatus }).eq("id", batchId);
+    }
     qc.invalidateQueries({ queryKey: ["queen-batch", batchId] });
     qc.invalidateQueries({ queryKey: ["queen-steps", batchId] });
     qc.invalidateQueries({ queryKey: ["queen-events", batchId] });
@@ -197,7 +218,7 @@ function BatchPage() {
               <h2 className="mt-1 font-bold">{scenarioTitle}</h2>
               <p className="mt-1 text-xs text-muted-foreground">Початок {batch.grafted_on} · виконано {completedCount} з {defs.length} етапів</p>
             </div>
-            <Badge variant="secondary">{statusLabel(batch.status)}</Badge>
+            <Badge variant="secondary">{statusLabel(automaticStatus)}</Badge>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-background/70">
             <div className={`h-full rounded-full ${scenario.bar}`} style={{ width: `${defs.length ? (completedCount / defs.length) * 100 : 0}%` }} />
@@ -205,37 +226,6 @@ function BatchPage() {
         </div>
 
         <div className="space-y-4 p-4">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <Label className="text-xs">Статус партії</Label>
-            <div className="mt-1">
-              <Select value={batch.status ?? "planned"} onValueChange={(v) => patchBatch({ status: v }, ["status"])}>
-              <SelectTrigger className="w-full sm:w-[260px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {QUEEN_STATUSES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-        {batch.status !== suggested ? (
-          <div className="text-xs text-muted-foreground flex items-start gap-1">
-            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-            <span>
-              За календарем зараз: «{statusLabel(suggested)}».{" "}
-               <button className="font-medium text-primary underline" onClick={() => patchBatch({ status: suggested }, ["status"])}>
-                Застосувати
-              </button>
-            </span>
-          </div>
-        ) : null}
-
         <Collapsible>
           <CollapsibleTrigger asChild>
             <Button variant="outline" className="w-full justify-between">
@@ -259,12 +249,6 @@ function BatchPage() {
             value={batch.next_action_planned_on}
             onSave={(v) => patchBatch({ next_action_planned_on: v })}
           />
-          <PlanField
-            label={nextAction === "undecided" ? "День дії (факт)" : `${NEXT_ACTION_LABEL[nextAction]} (факт)`}
-            value={batch.next_action_done_on}
-            onSave={(v) => patchBatch({ next_action_done_on: v }, ["next_action_done_on"])}
-          />
-          <PlanField label="Вихід маток (факт)" value={batch.emerged_on} onSave={(v) => patchBatch({ emerged_on: v }, ["emerged_on"])} />
         </div>
 
         <div className="text-xs text-muted-foreground">
@@ -313,6 +297,7 @@ function BatchPage() {
               nextAction={nextAction}
               onDecide={chooseAction}
               onChange={refresh}
+              isCurrent={i === currentStepIndex}
             />
           );
         })}
@@ -364,6 +349,7 @@ function StepCard({
   nextAction,
   onDecide,
   onChange,
+  isCurrent,
 }: {
   n: number;
   def: StepDef;
@@ -373,8 +359,14 @@ function StepCard({
   nextAction: QueenNextAction;
   onDecide: (v: QueenNextAction | null) => Promise<void>;
   onChange: () => void;
+  isCurrent: boolean;
 }) {
   const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState(isCurrent);
+
+  useEffect(() => {
+    if (isCurrent) setOpen(true);
+  }, [isCurrent]);
 
   async function patch(p: any) {
     if (!row) return;
@@ -391,24 +383,28 @@ function StepCard({
   const isToday = planned === today();
 
   return (
-    <div className="relative flex gap-3 pb-4 sm:gap-4">
+    <div className={`relative flex gap-3 pb-4 sm:gap-4 ${isCurrent ? "py-2" : ""}`}>
         <div className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-4 border-background text-sm font-bold sm:h-11 sm:w-11 ${done ? `${accent} text-primary-foreground` : isPast || isToday ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
           {done ? <Check className="h-4 w-4" /> : n}
         </div>
-        <Card className={`min-w-0 flex-1 p-3 sm:p-4 ${def.critical ? "border-destructive/60" : isToday ? "border-primary/60" : ""}`}>
-          <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
-            <div className="font-semibold leading-snug">{n}. {def.title}</div>
-            <Badge variant={done ? "default" : isPast ? "destructive" : isToday ? "secondary" : "outline"} className="w-fit shrink-0">
-              {done ? "Виконано" : isPast ? "Прострочено" : isToday ? "Сьогодні" : "За планом"}
-            </Badge>
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-1">
-            <Badge variant="outline">{dayLabel(def)}</Badge>
-            <Badge variant="secondary"><CalendarDays className="mr-1 h-3 w-3" />{stepDateLabel(def, batch.grafted_on)}</Badge>
-            {row?.planned_on && row.planned_on !== addDays(batch.grafted_on, def.dayFrom) ? (
-              <Badge variant="outline">план змінено: {row.planned_on}</Badge>
-            ) : null}
-          </div>
+        <Collapsible open={open} onOpenChange={setOpen} className="min-w-0 flex-1">
+          <Card className={`overflow-hidden p-0 ${def.critical ? "border-destructive/60" : isCurrent ? "border-primary shadow-md ring-2 ring-primary/30" : ""}`}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className={`h-auto w-full justify-between whitespace-normal rounded-none p-3 text-left sm:p-4 ${isCurrent ? "min-h-20 bg-primary/10 text-base" : "min-h-14"}`}>
+                <span className="min-w-0">
+                  {isCurrent ? <span className="mb-1 block text-xs font-bold uppercase text-primary">Поточний етап</span> : null}
+                  <span className="block font-semibold leading-snug">{n}. {def.title}</span>
+                  <span className="mt-1 block text-xs font-normal text-muted-foreground">{dayLabel(def)} · {stepDateLabel(def, batch.grafted_on)}</span>
+                </span>
+                <span className="ml-2 flex shrink-0 items-center gap-2">
+                  <Badge variant={done ? "default" : isPast ? "destructive" : isToday ? "secondary" : "outline"}>
+                    {done ? "Виконано" : isPast ? "Прострочено" : isToday ? "Сьогодні" : "За планом"}
+                  </Badge>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+                </span>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="border-t p-3 sm:p-4">
 
           <div className="mt-3 flex items-start gap-2 rounded-md bg-muted p-2 text-xs text-muted-foreground">
             <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0" />
@@ -448,27 +444,6 @@ function StepCard({
 
           {!def.decision ? (
             <>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            <div>
-              <Label className="text-xs">Планова дата</Label>
-              <Input
-                type="date"
-                value={row?.planned_on ?? ""}
-                disabled={!row || saving}
-                onChange={(e) => patch({ planned_on: e.target.value || null })}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">Фактична дата</Label>
-              <Input
-                type="date"
-                value={row?.done_on ?? ""}
-                disabled={!row || saving}
-                onChange={(e) => patch({ done_on: e.target.value || null })}
-              />
-            </div>
-          </div>
-
           <label className="mt-3 flex items-center gap-2 rounded-md border p-2 text-sm font-medium">
             <Checkbox
               checked={done}
@@ -491,7 +466,9 @@ function StepCard({
               зберігаються в історії.
             </div>
           ) : null}
-        </Card>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
     </div>
   );
 }

@@ -8,14 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
-import { ArrowRight, CalendarDays, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   METHOD_LABEL,
   NEXT_ACTION_LABEL,
   statusLabel,
   nextActionOf,
-  automaticQueenStatus,
   type QueenMethod,
 } from "@/lib/queens";
 
@@ -118,7 +117,6 @@ function BatchRow({ batch, onChange }: { batch: any; onChange: () => void }) {
   const [saving, setSaving] = useState(false);
   const method: QueenMethod = (batch.method ?? "comb") as QueenMethod;
   const nextAction = nextActionOf(batch);
-  const autoStatus = automaticQueenStatus({ method, nextAction, start: batch.grafted_on, currentStatus: batch.status });
   const card = METHOD_STYLE[method] ?? METHODS[0];
   const subtitle =
     nextAction === "undecided"
@@ -162,7 +160,7 @@ function BatchRow({ batch, onChange }: { batch: any; onChange: () => void }) {
           <div className="rounded-md bg-muted p-2"><span className="block text-muted-foreground">Кількість</span><span className="font-medium">{batch.larvae_count ?? batch.count ?? "—"} шт.</span></div>
         </div>
         <div className="mt-3 flex flex-wrap gap-1">
-          <Badge variant="secondary">{statusLabel(autoStatus)}</Badge>
+          <Badge variant="secondary">{statusLabel(batch.status)}</Badge>
           {batch.next_action_planned_on ? <Badge variant="outline"><CalendarDays className="mr-1 h-3 w-3" />до {batch.next_action_planned_on}</Badge> : null}
           {nextAction === "undecided" && batch.next_action_planned_on && batch.next_action_planned_on <= new Date().toISOString().slice(0, 10) ? (
             <Badge variant="destructive">Готово до вибору дії</Badge>
