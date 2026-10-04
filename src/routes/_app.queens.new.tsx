@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { METHOD_LABEL, createStepsFor, plannedDates, type QueenMethod } from "@/lib/queens";
+import { METHOD_LABEL, plannedDates, type QueenMethod } from "@/lib/queens";
+import { createStepsFor } from "@/lib/queen-steps";
 
 export const Route = createFileRoute("/_app/queens/new")({
   head: () => ({
