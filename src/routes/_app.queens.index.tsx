@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
-import { ArrowRight, CalendarDays, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   METHOD_LABEL,

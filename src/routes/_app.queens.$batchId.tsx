@@ -105,15 +105,21 @@ function BatchPage() {
     currentStatus: batch.status,
   });
 
-  useEffect(() => {
-    if (!batch || !steps || batch.status === automaticStatus) return;
-    supabase.from("queen_batches").update({ status: automaticStatus }).eq("id", batchId).then(() => {
-      qc.invalidateQueries({ queryKey: ["queen-batch", batchId] });
-      qc.invalidateQueries({ queryKey: ["queens"] });
+  const refresh = async () => {
+    const { data: latestSteps } = await supabase
+      .from("queen_batch_steps")
+      .select("step_key,done")
+      .eq("batch_id", batchId);
+    const nextStatus = automaticQueenStatus({
+      method,
+      nextAction,
+      start: batch.grafted_on,
+      steps: latestSteps,
+      currentStatus: batch.status,
     });
-  }, [automaticStatus, batch, batchId, qc, steps]);
-
-  const refresh = () => {
+    if (batch.status !== nextStatus) {
+      await supabase.from("queen_batches").update({ status: nextStatus }).eq("id", batchId);
+    }
     qc.invalidateQueries({ queryKey: ["queen-batch", batchId] });
     qc.invalidateQueries({ queryKey: ["queen-steps", batchId] });
     qc.invalidateQueries({ queryKey: ["queen-events", batchId] });
