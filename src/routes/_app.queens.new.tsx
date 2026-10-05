@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { METHOD_LABEL, plannedDates, type QueenMethod } from "@/lib/queens";
+import { METHOD_LABEL, plannedDates, todayLocal, type QueenMethod } from "@/lib/queens";
 import { createStepsFor } from "@/lib/queen-steps";
 
 export const Route = createFileRoute("/_app/queens/new")({
@@ -28,7 +28,7 @@ function NewQueenBatchPage() {
   const navigate = useNavigate({ from: Route.fullPath });
   const [name, setName] = useState("");
   const [method, setMethod] = useState<QueenMethod>("comb");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayLocal());
   const [count, setCount] = useState("");
   const [busy, setBusy] = useState(false);
 

@@ -56,9 +56,25 @@ export type StepDef = {
 
 
 export function addDays(date: string, n: number) {
-  const d = new Date(`${date}T00:00:00`);
-  d.setDate(d.getDate() + n);
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
+}
+
+/** Поточна дата за локальним часом користувача (YYYY-MM-DD), а не за UTC. */
+export function todayLocal() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Різниця в днях між двома датами YYYY-MM-DD (UTC-розрахунок, без зсувів часового поясу). */
+export function daysBetween(from: string, to: string) {
+  return Math.round(
+    (new Date(`${to}T00:00:00Z`).getTime() - new Date(`${from}T00:00:00Z`).getTime()) / 86400000,
+  );
 }
 
 export function dayLabel(s: StepDef) {
@@ -288,11 +304,9 @@ export function suggestedStatus(
   method: QueenMethod,
   nextAction: QueenNextAction,
   start: string,
-  today = new Date().toISOString().slice(0, 10),
+  today = todayLocal(),
 ) {
-  const d = Math.round(
-    (new Date(`${today}T00:00:00`).getTime() - new Date(`${start}T00:00:00`).getTime()) / 86400000,
-  );
+  const d = daysBetween(start, today);
   const check = method === "comb" ? 5 : 1;
   const action = method === "comb" ? 14 : 10;
   const quietFrom = method === "comb" ? 10 : 6;
@@ -354,7 +368,7 @@ export function currentQueenStepIndex({
   start: string;
 }) {
   if (!defs.length) return -1;
-  const todayString = new Date().toISOString().slice(0, 10);
+  const todayString = todayLocal();
   const due = defs.findIndex((def) => {
     const row = steps?.find((step) => step.step_key === def.key);
     return !row?.done && addDays(start, def.dayFrom) <= todayString;
