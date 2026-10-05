@@ -9,32 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AppRouteImport } from './routes/_app'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
-import { Route as AppApiaryRouteImport } from './routes/_app.apiary'
-import { Route as AppArchiveRouteImport } from './routes/_app.archive'
-import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
-import { Route as AppChatRouteImport } from './routes/_app.chat'
-import { Route as AppHivesRouteImport } from './routes/_app.hives'
-import { Route as AppMarketplaceRouteImport } from './routes/_app.marketplace'
-import { Route as AppPointsRouteImport } from './routes/_app.points'
-import { Route as AppQueensRouteImport } from './routes/_app.queens'
 import { Route as AppStatsRouteImport } from './routes/_app.stats'
-import { Route as AppHQrUuidRouteImport } from './routes/_app.h.$qrUuid'
-import { Route as AppPointsIndexRouteImport } from './routes/_app.points.index'
-import { Route as AppPointsPointIdRouteImport } from './routes/_app.points.$pointId'
+import { Route as AppQueensRouteImport } from './routes/_app.queens'
+import { Route as AppPointsRouteImport } from './routes/_app.points'
+import { Route as AppMarketplaceRouteImport } from './routes/_app.marketplace'
+import { Route as AppHivesRouteImport } from './routes/_app.hives'
+import { Route as AppChatRouteImport } from './routes/_app.chat'
+import { Route as AppCalendarRouteImport } from './routes/_app.calendar'
+import { Route as AppArchiveRouteImport } from './routes/_app.archive'
+import { Route as AppApiaryRouteImport } from './routes/_app.apiary'
 import { Route as AppQueensIndexRouteImport } from './routes/_app.queens.index'
-import { Route as AppQueensBatchIdRouteImport } from './routes/_app.queens.$batchId'
+import { Route as AppPointsIndexRouteImport } from './routes/_app.points.index'
 import { Route as AppQueensNewRouteImport } from './routes/_app.queens.new'
+import { Route as AppQueensBatchIdRouteImport } from './routes/_app.queens.$batchId'
+import { Route as AppPointsPointIdRouteImport } from './routes/_app.points.$pointId'
+import { Route as AppHQrUuidRouteImport } from './routes/_app.h.$qrUuid'
 
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
@@ -42,39 +42,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppApiaryRoute = AppApiaryRouteImport.update({
-  id: '/apiary',
-  path: '/apiary',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppArchiveRoute = AppArchiveRouteImport.update({
-  id: '/archive',
-  path: '/archive',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppCalendarRoute = AppCalendarRouteImport.update({
-  id: '/calendar',
-  path: '/calendar',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppChatRoute = AppChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppHivesRoute = AppHivesRouteImport.update({
-  id: '/hives',
-  path: '/hives',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppMarketplaceRoute = AppMarketplaceRouteImport.update({
-  id: '/marketplace',
-  path: '/marketplace',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppPointsRoute = AppPointsRouteImport.update({
-  id: '/points',
-  path: '/points',
+const AppStatsRoute = AppStatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
   getParentRoute: () => AppRoute,
 } as any)
 const AppQueensRoute = AppQueensRouteImport.update({
@@ -82,29 +52,54 @@ const AppQueensRoute = AppQueensRouteImport.update({
   path: '/queens',
   getParentRoute: () => AppRoute,
 } as any)
-const AppStatsRoute = AppStatsRouteImport.update({
-  id: '/stats',
-  path: '/stats',
+const AppPointsRoute = AppPointsRouteImport.update({
+  id: '/points',
+  path: '/points',
   getParentRoute: () => AppRoute,
 } as any)
-const AppHQrUuidRoute = AppHQrUuidRouteImport.update({
-  id: '/h/$qrUuid',
-  path: '/h/$qrUuid',
+const AppMarketplaceRoute = AppMarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
   getParentRoute: () => AppRoute,
+} as any)
+const AppHivesRoute = AppHivesRouteImport.update({
+  id: '/hives',
+  path: '/hives',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChatRoute = AppChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCalendarRoute = AppCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppArchiveRoute = AppArchiveRouteImport.update({
+  id: '/archive',
+  path: '/archive',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppApiaryRoute = AppApiaryRouteImport.update({
+  id: '/apiary',
+  path: '/apiary',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppQueensIndexRoute = AppQueensIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppQueensRoute,
 } as any)
 const AppPointsIndexRoute = AppPointsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppPointsRoute,
 } as any)
-const AppPointsPointIdRoute = AppPointsPointIdRouteImport.update({
-  id: '/$pointId',
-  path: '/$pointId',
-  getParentRoute: () => AppPointsRoute,
-} as any)
-const AppQueensIndexRoute = AppQueensIndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AppQueensNewRoute = AppQueensNewRouteImport.update({
+  id: '/new',
+  path: '/new',
   getParentRoute: () => AppQueensRoute,
 } as any)
 const AppQueensBatchIdRoute = AppQueensBatchIdRouteImport.update({
@@ -112,10 +107,15 @@ const AppQueensBatchIdRoute = AppQueensBatchIdRouteImport.update({
   path: '/$batchId',
   getParentRoute: () => AppQueensRoute,
 } as any)
-const AppQueensNewRoute = AppQueensNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => AppQueensRoute,
+const AppPointsPointIdRoute = AppPointsPointIdRouteImport.update({
+  id: '/$pointId',
+  path: '/$pointId',
+  getParentRoute: () => AppPointsRoute,
+} as any)
+const AppHQrUuidRoute = AppHQrUuidRouteImport.update({
+  id: '/h/$qrUuid',
+  path: '/h/$qrUuid',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -241,18 +241,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/': {
@@ -262,53 +262,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/apiary': {
-      id: '/_app/apiary'
-      path: '/apiary'
-      fullPath: '/apiary'
-      preLoaderRoute: typeof AppApiaryRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/archive': {
-      id: '/_app/archive'
-      path: '/archive'
-      fullPath: '/archive'
-      preLoaderRoute: typeof AppArchiveRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/calendar': {
-      id: '/_app/calendar'
-      path: '/calendar'
-      fullPath: '/calendar'
-      preLoaderRoute: typeof AppCalendarRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/chat': {
-      id: '/_app/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof AppChatRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/hives': {
-      id: '/_app/hives'
-      path: '/hives'
-      fullPath: '/hives'
-      preLoaderRoute: typeof AppHivesRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/marketplace': {
-      id: '/_app/marketplace'
-      path: '/marketplace'
-      fullPath: '/marketplace'
-      preLoaderRoute: typeof AppMarketplaceRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/points': {
-      id: '/_app/points'
-      path: '/points'
-      fullPath: '/points'
-      preLoaderRoute: typeof AppPointsRouteImport
+    '/_app/stats': {
+      id: '/_app/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof AppStatsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/queens': {
@@ -318,19 +276,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppQueensRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/stats': {
-      id: '/_app/stats'
-      path: '/stats'
-      fullPath: '/stats'
-      preLoaderRoute: typeof AppStatsRouteImport
+    '/_app/points': {
+      id: '/_app/points'
+      path: '/points'
+      fullPath: '/points'
+      preLoaderRoute: typeof AppPointsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/h/$qrUuid': {
-      id: '/_app/h/$qrUuid'
-      path: '/h/$qrUuid'
-      fullPath: '/h/$qrUuid'
-      preLoaderRoute: typeof AppHQrUuidRouteImport
+    '/_app/marketplace': {
+      id: '/_app/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof AppMarketplaceRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_app/hives': {
+      id: '/_app/hives'
+      path: '/hives'
+      fullPath: '/hives'
+      preLoaderRoute: typeof AppHivesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/chat': {
+      id: '/_app/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof AppChatRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/calendar': {
+      id: '/_app/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AppCalendarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/archive': {
+      id: '/_app/archive'
+      path: '/archive'
+      fullPath: '/archive'
+      preLoaderRoute: typeof AppArchiveRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/apiary': {
+      id: '/_app/apiary'
+      path: '/apiary'
+      fullPath: '/apiary'
+      preLoaderRoute: typeof AppApiaryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/queens/': {
+      id: '/_app/queens/'
+      path: '/'
+      fullPath: '/queens/'
+      preLoaderRoute: typeof AppQueensIndexRouteImport
+      parentRoute: typeof AppQueensRoute
     }
     '/_app/points/': {
       id: '/_app/points/'
@@ -339,18 +339,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPointsIndexRouteImport
       parentRoute: typeof AppPointsRoute
     }
-    '/_app/points/$pointId': {
-      id: '/_app/points/$pointId'
-      path: '/$pointId'
-      fullPath: '/points/$pointId'
-      preLoaderRoute: typeof AppPointsPointIdRouteImport
-      parentRoute: typeof AppPointsRoute
-    }
-    '/_app/queens/': {
-      id: '/_app/queens/'
-      path: '/'
-      fullPath: '/queens/'
-      preLoaderRoute: typeof AppQueensIndexRouteImport
+    '/_app/queens/new': {
+      id: '/_app/queens/new'
+      path: '/new'
+      fullPath: '/queens/new'
+      preLoaderRoute: typeof AppQueensNewRouteImport
       parentRoute: typeof AppQueensRoute
     }
     '/_app/queens/$batchId': {
@@ -360,12 +353,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppQueensBatchIdRouteImport
       parentRoute: typeof AppQueensRoute
     }
-    '/_app/queens/new': {
-      id: '/_app/queens/new'
-      path: '/new'
-      fullPath: '/queens/new'
-      preLoaderRoute: typeof AppQueensNewRouteImport
-      parentRoute: typeof AppQueensRoute
+    '/_app/points/$pointId': {
+      id: '/_app/points/$pointId'
+      path: '/$pointId'
+      fullPath: '/points/$pointId'
+      preLoaderRoute: typeof AppPointsPointIdRouteImport
+      parentRoute: typeof AppPointsRoute
+    }
+    '/_app/h/$qrUuid': {
+      id: '/_app/h/$qrUuid'
+      path: '/h/$qrUuid'
+      fullPath: '/h/$qrUuid'
+      preLoaderRoute: typeof AppHQrUuidRouteImport
+      parentRoute: typeof AppRoute
     }
   }
 }
