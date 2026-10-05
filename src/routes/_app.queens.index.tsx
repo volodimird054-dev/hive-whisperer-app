@@ -15,6 +15,7 @@ import {
   NEXT_ACTION_LABEL,
   statusLabel,
   nextActionOf,
+  todayLocal,
   type QueenMethod,
 } from "@/lib/queens";
 
@@ -165,7 +166,7 @@ function BatchRow({ batch, onChange }: { batch: any; onChange: () => void }) {
         <div className="mt-3 flex flex-wrap gap-1">
           <Badge variant="secondary">{statusLabel(batch.status)}</Badge>
           {batch.next_action_planned_on ? <Badge variant="outline"><CalendarDays className="mr-1 h-3 w-3" />до {batch.next_action_planned_on}</Badge> : null}
-          {nextAction === "undecided" && batch.next_action_planned_on && batch.next_action_planned_on <= new Date().toISOString().slice(0, 10) ? (
+          {nextAction === "undecided" && batch.next_action_planned_on && batch.next_action_planned_on <= todayLocal() ? (
             <Badge variant="destructive">Готово до вибору дії</Badge>
           ) : null}
         </div>
