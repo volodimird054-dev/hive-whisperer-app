@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useMatchRoute } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,12 +69,15 @@ export const METHOD_STYLE: Record<QueenMethod, MethodCard> = {
 };
 
 function QueensPage() {
+  const matchRoute = useMatchRoute();
   const qc = useQueryClient();
   const { data: batches } = useQuery({
     queryKey: ["queens"],
     queryFn: async () =>
       (await supabase.from("queen_batches").select("*").order("grafted_on", { ascending: false })).data ?? [],
   });
+  if (matchRoute({ to: "/queens/new" })) return null;
+
   return (
     <div className="space-y-8 lg:relative lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-w-[1380px] lg:-translate-x-1/2">
       <section>
