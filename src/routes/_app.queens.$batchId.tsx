@@ -44,7 +44,7 @@ export const Route = createFileRoute("/_app/queens/$batchId")({
   component: BatchPage,
 });
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = todayLocal;
 
 const METHOD_STYLE: Record<QueenMethod, { bar: string; soft: string; border: string }> = {
   comb: { bar: "bg-chart-2", soft: "bg-chart-2/10", border: "border-chart-2/40" },
