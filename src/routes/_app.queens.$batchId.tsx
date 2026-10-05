@@ -27,7 +27,7 @@ import {
   type QueenNextAction,
   type StepDef,
 } from "@/lib/queens";
-import { nextActionOf } from "@/lib/queens";
+import { nextActionOf, todayLocal } from "@/lib/queens";
 import { createStepsFor } from "@/lib/queen-steps";
 
 export const Route = createFileRoute("/_app/queens/$batchId")({
