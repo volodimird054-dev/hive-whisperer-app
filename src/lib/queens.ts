@@ -52,6 +52,8 @@ export type StepDef = {
   emergence?: boolean;
   /** крок вибору: забираємо маточники або вдягаємо бігудішки */
   decision?: boolean;
+  /** інформаційний етап, який не потрібно відмічати виконаним */
+  trackCompletion?: boolean;
 };
 
 
@@ -121,6 +123,7 @@ export function buildStepDefs(method: QueenMethod, nextAction: QueenNextAction):
         dayFrom: 0,
         advice: "Обмежте матку в пластиковому соті у сильній материнській сім’ї.",
         warning: "Яйця ще не личинки — переносити їх у стартер раніше 4-го дня заборонено.",
+        trackCompletion: false,
       },
       {
         key: "incubate",
@@ -128,6 +131,7 @@ export function buildStepDefs(method: QueenMethod, nextAction: QueenNextAction):
         dayFrom: 0,
         dayTo: 3,
         advice: "Три дні яйця розвиваються у материнській сім’ї — сот не турбувати.",
+        trackCompletion: false,
       },
       {
         key: "starter",
@@ -152,8 +156,9 @@ export function buildStepDefs(method: QueenMethod, nextAction: QueenNextAction):
         dayFrom: 5,
         dayTo: 13,
         advice: "Вихователька має бути забезпечена кормом, пергою та молодими бджолами.",
+        trackCompletion: false,
       },
-      { key: "quiet", title: "Період спокою та тиші", dayFrom: 10, dayTo: 13, advice: "Лише зовнішній огляд.", warning: QUIET_WARNING },
+      { key: "quiet", title: "Період спокою та тиші", dayFrom: 10, dayTo: 13, advice: "Лише зовнішній огляд.", warning: QUIET_WARNING, trackCompletion: false },
     ];
     if (nextAction === "undecided") {
       steps.push({
@@ -226,8 +231,9 @@ export function buildStepDefs(method: QueenMethod, nextAction: QueenNextAction):
       dayFrom: 1,
       dayTo: 9,
       advice: "Тримайте виховательку сильною, з кормом і молодими бджолами.",
+      trackCompletion: false,
     },
-    { key: "quiet", title: "Період спокою та тиші", dayFrom: 6, dayTo: 9, advice: "Лише зовнішній огляд.", warning: QUIET_WARNING },
+    { key: "quiet", title: "Період спокою та тиші", dayFrom: 6, dayTo: 9, advice: "Лише зовнішній огляд.", warning: QUIET_WARNING, trackCompletion: false },
   ];
   if (nextAction === "undecided") {
     steps.push({
@@ -354,10 +360,12 @@ export function automaticQueenStatus({
 }) {
   if (currentStatus === "cancelled") return "cancelled";
   const defs = buildStepDefs(method, nextAction);
-  const actionableDefs = defs.filter((def) => !def.decision);
+  const actionableDefs = defs.filter((def) => !def.decision && def.trackCompletion !== false);
   const allDone = actionableDefs.length > 0 && actionableDefs.every((def) => steps?.some((step) => step.step_key === def.key && step.done));
   if (allDone) return "finished";
-  const current = defs.find((def) => !steps?.find((step) => step.step_key === def.key)?.done);
+  const current = defs.find(
+    (def) => def.trackCompletion !== false && !steps?.find((step) => step.step_key === def.key)?.done,
+  );
   if (current) {
     if (current.decision) return "ready_decision";
     if (current.key === "acceptance") return "awaiting_acceptance";
@@ -384,10 +392,13 @@ export function currentQueenStepIndex({
   if (!defs.length) return -1;
   const todayString = todayLocal();
   const due = defs.findIndex((def) => {
+    if (def.trackCompletion === false) return false;
     const row = steps?.find((step) => step.step_key === def.key);
     return !row?.done && addDays(start, def.dayFrom) <= todayString;
   });
   if (due >= 0) return due;
-  const next = defs.findIndex((def) => !steps?.find((step) => step.step_key === def.key)?.done);
+  const next = defs.findIndex(
+    (def) => def.trackCompletion !== false && !steps?.find((step) => step.step_key === def.key)?.done,
+  );
   return next >= 0 ? next : defs.length - 1;
 }

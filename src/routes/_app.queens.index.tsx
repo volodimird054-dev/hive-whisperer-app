@@ -99,15 +99,15 @@ function QueensPage() {
   return (
     <div className="space-y-8 lg:relative lg:left-1/2 lg:w-[calc(100vw-2rem)] lg:max-w-[1380px] lg:-translate-x-1/2">
       <section>
-        <div className="mb-5 flex items-start justify-between gap-3">
+        <div className="mb-4">
           <div>
             <p className="text-sm font-medium text-primary">Виведення маток</p>
             <h1 className="text-2xl font-bold">Виведення маток</h1>
           </div>
-          <Button asChild className="shrink-0">
-            <Link to="/queens/new">Нова партія</Link>
-          </Button>
         </div>
+        <Button asChild className="mx-auto flex w-full max-w-xl">
+          <Link to="/queens/new">Нова партія</Link>
+        </Button>
       </section>
 
       <section>

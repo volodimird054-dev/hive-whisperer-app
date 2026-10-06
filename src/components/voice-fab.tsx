@@ -37,7 +37,7 @@ export function VoiceFab() {
   const { supported, listening, transcript, setTranscript, start, stop } = useVoiceInput({ silenceMs: 3500 });
 
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const showVoice = !VOICE_HIDDEN.includes(pathname);
+  const showVoice = !VOICE_HIDDEN.includes(pathname) && !/^\/queens(?:\/|$)/.test(pathname);
   const showScan = /^\/points\/[^/]+$/.test(pathname);
 
   useEffect(() => {
