@@ -15,6 +15,7 @@ import {
   NEXT_ACTION_LABEL,
   statusLabel,
   nextActionOf,
+  shouldArchiveQueenBatch,
   todayLocal,
   type QueenMethod,
 } from "@/lib/queens";
@@ -74,8 +75,24 @@ function QueensPage() {
   const qc = useQueryClient();
   const { data: batches } = useQuery({
     queryKey: ["queens"],
-    queryFn: async () =>
-      (await supabase.from("queen_batches").select("*").order("grafted_on", { ascending: false })).data ?? [],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("queen_batches")
+        .select("*, queen_batch_steps(done_on)")
+        .is("archived_at", null)
+        .order("grafted_on", { ascending: false });
+      const rows = data ?? [];
+      const expired = rows.filter((batch: any) => shouldArchiveQueenBatch(batch, batch.queen_batch_steps));
+      if (expired.length) {
+        const archivedAt = new Date().toISOString();
+        await Promise.all(
+          expired.map((batch: any) =>
+            supabase.from("queen_batches").update({ archived_at: archivedAt }).eq("id", batch.id),
+          ),
+        );
+      }
+      return rows.filter((batch: any) => !expired.some((item: any) => item.id === batch.id));
+    },
   });
   if (matchRoute({ to: "/queens/new" })) return null;
 
@@ -87,8 +104,8 @@ function QueensPage() {
             <p className="text-sm font-medium text-primary">Виведення маток</p>
             <h1 className="text-2xl font-bold">Виведення маток</h1>
           </div>
-          <Button asChild className="h-28 w-11 shrink-0 px-0 py-3 text-sm [writing-mode:vertical-rl]">
-            <Link to="/queens/new">нова партія</Link>
+          <Button asChild className="shrink-0">
+            <Link to="/queens/new">Нова партія</Link>
           </Button>
         </div>
       </section>
@@ -124,7 +141,7 @@ function BatchRow({ batch, onChange }: { batch: any; onChange: () => void }) {
   const card = METHOD_STYLE[method] ?? METHODS[0];
   const subtitle =
     nextAction === "undecided"
-      ? `${METHOD_LABEL[method]} — дію оберете на день дії`
+      ? `${METHOD_LABEL[method]} — очікує вибору`
       : `${METHOD_LABEL[method]} → ${NEXT_ACTION_LABEL[nextAction]}`;
 
   async function save() {

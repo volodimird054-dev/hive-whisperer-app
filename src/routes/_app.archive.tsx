@@ -13,6 +13,16 @@ import { toast } from "sonner";
 import { sortHives } from "@/lib/hive-sort";
 
 export const Route = createFileRoute("/_app/archive")({
+  head: () => ({
+    meta: [
+      { title: "Архів — Пасічник" },
+      { name: "description", content: "Архів вуликів і завершених партій виведення маток." },
+      { property: "og:title", content: "Архів — Пасічник" },
+      { property: "og:description", content: "Архів вуликів і завершених партій виведення маток." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: ArchivePage,
 });
 
@@ -25,6 +35,18 @@ function ArchivePage() {
     queryFn: async () => {
       const { data } = await (supabase.from("hives") as any)
         .select("*").not("archived_at", "is", null)
+        .order("archived_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+
+  const { data: queenBatches, isLoading: queenBatchesLoading } = useQuery({
+    queryKey: ["archived-queen-batches"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("queen_batches")
+        .select("*")
+        .not("archived_at", "is", null)
         .order("archived_at", { ascending: false });
       return data ?? [];
     },
@@ -58,20 +80,41 @@ function ArchivePage() {
     invalidate();
   }
 
+  async function restoreQueenBatch(id: string) {
+    const { error } = await supabase
+      .from("queen_batches")
+      .update({ archived_at: null, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Партію відновлено");
+    invalidate();
+  }
+
+  async function deleteQueenBatch(id: string, name: string) {
+    if (!confirm(`Видалити партію «${name}» назавжди?`)) return;
+    const { error } = await supabase.from("queen_batches").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Партію видалено назавжди");
+    invalidate();
+  }
+
   function invalidate() {
     qc.invalidateQueries({ queryKey: ["archived-hives"] });
     qc.invalidateQueries({ queryKey: ["hives"] });
     qc.invalidateQueries({ queryKey: ["point-hives"] });
     qc.invalidateQueries({ queryKey: ["points-counts"] });
     qc.invalidateQueries({ queryKey: ["stats"] });
+    qc.invalidateQueries({ queryKey: ["archived-queen-batches"] });
+    qc.invalidateQueries({ queryKey: ["queens"] });
   }
 
-  if (isLoading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
+  if (isLoading || queenBatchesLoading) return <Loader2 className="w-6 h-6 animate-spin mx-auto mt-10" />;
 
   const target = list.find((h: any) => h.id === confirmId);
 
   return (
-    <div>
+    <div className="space-y-8">
+      <section>
       <h1 className="text-2xl font-bold mb-4">Архів вуликів</h1>
       {!list.length ? (
         <Card className="p-8 text-center text-muted-foreground">Архів порожній.</Card>
@@ -103,6 +146,33 @@ function ArchivePage() {
           ))}
         </div>
       )}
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-xl font-bold">Архів партій маток</h2>
+        {!queenBatches?.length ? (
+          <Card className="p-8 text-center text-muted-foreground">Архів партій порожній.</Card>
+        ) : (
+          <div className="space-y-2">
+            {queenBatches.map((batch: any) => (
+              <Card key={batch.id} className="p-4">
+                <div className="font-medium">{batch.name}</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Початок {batch.grafted_on} · архівовано {new Date(batch.archived_at).toLocaleDateString("uk-UA")}
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Button variant="outline" onClick={() => restoreQueenBatch(batch.id)}>
+                    <ArchiveRestore className="mr-2 h-4 w-4" /> Відновити
+                  </Button>
+                  <Button variant="destructive" onClick={() => deleteQueenBatch(batch.id, batch.name)}>
+                    <Trash2 className="mr-2 h-4 w-4" /> Видалити назавжди
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
 
       <AlertDialog open={!!confirmId} onOpenChange={(v) => !v && setConfirmId(null)}>
         <AlertDialogContent>

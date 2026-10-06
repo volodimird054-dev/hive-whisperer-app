@@ -110,7 +110,7 @@ const HARVEST_CRITICAL =
   "КРИТИЧНО: вихід матки можливий уже наступного дня. Одна матка, що вийде першою, знищить решту маточників і зіпсує всю партію. Не відкладайте відбір.";
 
 const INTRO_ADVICE =
-  "Підсаджуйте неплідних маток у відводки протягом перших трьох днів після виходу. Після третього дня результат підсаджування менш передбачуваний.";
+  "Підсаджуйте неплідних маток у відводки протягом перших трьох днів після виходу.";
 
 export function buildStepDefs(method: QueenMethod, nextAction: QueenNextAction): StepDef[] {
   if (method === "comb") {
@@ -119,7 +119,7 @@ export function buildStepDefs(method: QueenMethod, nextAction: QueenNextAction):
         key: "eggs",
         title: "Матка відкладає яйця у спеціальний сот",
         dayFrom: 0,
-        advice: "Обмежте матку на світлому щойно відбудованому соті у сильній материнській сім’ї.",
+        advice: "Обмежте матку в пластиковому соті у сильній материнській сім’ї.",
         warning: "Яйця ще не личинки — переносити їх у стартер раніше 4-го дня заборонено.",
       },
       {
@@ -323,6 +323,20 @@ export function suggestedStatus(
 export function nextActionOf(batch: { next_action?: string | null } | null | undefined): QueenNextAction {
   const value = batch?.next_action;
   return value === "cells" || value === "protectors" ? value : "undecided";
+}
+
+/** Завершена партія переходить до архіву через сім повних днів після останньої зміни або виконаного етапу. */
+export function shouldArchiveQueenBatch(
+  batch: { status?: string | null; updated_at?: string | null },
+  steps?: Array<{ done_on?: string | null }> | null,
+  today = todayLocal(),
+) {
+  if (batch.status !== "finished") return false;
+  const dates = [batch.updated_at?.slice(0, 10), ...(steps?.map((step) => step.done_on) ?? [])]
+    .filter((date): date is string => Boolean(date))
+    .sort();
+  const completedOn = dates.at(-1);
+  return completedOn ? daysBetween(completedOn, today) >= 7 : false;
 }
 
 export function automaticQueenStatus({

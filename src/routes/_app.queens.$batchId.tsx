@@ -162,7 +162,7 @@ function BatchPage() {
 
   const scenarioTitle =
     nextAction === "undecided"
-      ? `${METHOD_LABEL[method]} — дію оберете на день дії`
+      ? `${METHOD_LABEL[method]} — очікує вибору`
       : `${METHOD_LABEL[method]} → ${NEXT_ACTION_LABEL[nextAction]}`;
 
   /** Вибір дії на день дії: відбір маточників або бігудішки. */
@@ -448,7 +448,7 @@ function StepCard({
             <Checkbox
               checked={done}
               disabled={!row || saving}
-              onCheckedChange={(v) => patch({ done: !!v })}
+              onCheckedChange={(v) => patch({ done: !!v, done_on: v ? today() : null })}
             />
             Відмітити виконання
           </label>
