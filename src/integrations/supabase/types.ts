@@ -676,6 +676,7 @@ export type Database = {
         Row: {
           acceptance_check_on: string | null
           accepted_count: number | null
+          archived_at: string | null
           cells_harvested: number | null
           count: number | null
           created_at: string
@@ -703,6 +704,7 @@ export type Database = {
         Insert: {
           acceptance_check_on?: string | null
           accepted_count?: number | null
+          archived_at?: string | null
           cells_harvested?: number | null
           count?: number | null
           created_at?: string
@@ -730,6 +732,7 @@ export type Database = {
         Update: {
           acceptance_check_on?: string | null
           accepted_count?: number | null
+          archived_at?: string | null
           cells_harvested?: number | null
           count?: number | null
           created_at?: string
