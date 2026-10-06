@@ -95,7 +95,10 @@ function BatchPage() {
   const nextAction: QueenNextAction = nextActionOf(batch);
   const defs = buildStepDefs(method, nextAction);
   const scenario = METHOD_STYLE[method] ?? METHOD_STYLE.comb;
-  const completedCount = steps?.filter((step: any) => step.done).length ?? 0;
+  const trackedDefs = defs.filter((def) => !def.decision && def.trackCompletion !== false);
+  const completedCount = trackedDefs.filter((def) =>
+    steps?.some((step: any) => step.step_key === def.key && step.done),
+  ).length;
   const currentStepIndex = currentQueenStepIndex({ defs, steps, start: batch.grafted_on });
   const automaticStatus = automaticQueenStatus({
     method,
@@ -216,12 +219,12 @@ function BatchPage() {
             <div>
               <p className="text-xs font-medium uppercase text-muted-foreground">Технічна карта</p>
               <h2 className="mt-1 font-bold">{scenarioTitle}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Початок {batch.grafted_on} · виконано {completedCount} з {defs.length} етапів</p>
+              <p className="mt-1 text-xs text-muted-foreground">Початок {batch.grafted_on} · виконано {completedCount} з {trackedDefs.length} обов’язкових етапів</p>
             </div>
             <Badge variant="secondary">{statusLabel(automaticStatus)}</Badge>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-background/70">
-            <div className={`h-full rounded-full ${scenario.bar}`} style={{ width: `${defs.length ? (completedCount / defs.length) * 100 : 0}%` }} />
+            <div className={`h-full rounded-full ${scenario.bar}`} style={{ width: `${trackedDefs.length ? (completedCount / trackedDefs.length) * 100 : 0}%` }} />
           </div>
         </div>
 
@@ -397,8 +400,8 @@ function StepCard({
                   <span className="mt-1 block text-xs font-normal text-muted-foreground">{dayLabel(def)} · {stepDateLabel(def, batch.grafted_on)}</span>
                 </span>
                 <span className="ml-2 flex shrink-0 items-center gap-2">
-                  <Badge variant={done ? "default" : isPast ? "destructive" : isToday ? "secondary" : "outline"}>
-                    {done ? "Виконано" : isPast ? "Прострочено" : isToday ? "Сьогодні" : "За планом"}
+                  <Badge variant={def.trackCompletion === false ? "outline" : done ? "default" : isPast ? "destructive" : isToday ? "secondary" : "outline"}>
+                    {def.trackCompletion === false ? "Інформація" : done ? "Виконано" : isPast ? "Прострочено" : isToday ? "Сьогодні" : "За планом"}
                   </Badge>
                   <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
                 </span>
@@ -444,6 +447,7 @@ function StepCard({
 
           {!def.decision ? (
             <>
+          {def.trackCompletion !== false ? (
           <label className="mt-3 flex items-center gap-2 rounded-md border p-2 text-sm font-medium">
             <Checkbox
               checked={done}
@@ -452,6 +456,7 @@ function StepCard({
             />
             Відмітити виконання
           </label>
+          ) : null}
 
           <div className="mt-3">
             <Label className="text-xs">Примітка</Label>
