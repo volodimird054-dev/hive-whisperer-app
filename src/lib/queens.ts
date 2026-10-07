@@ -362,7 +362,7 @@ export function automaticQueenStatus({
   const defs = buildStepDefs(method, nextAction);
   const actionableDefs = defs.filter((def) => !def.decision && def.trackCompletion !== false);
   const allDone = actionableDefs.length > 0 && actionableDefs.every((def) => steps?.some((step) => step.step_key === def.key && step.done));
-  if (allDone) return "finished";
+  if (allDone && nextAction !== "undecided") return "finished";
   const current = defs.find(
     (def) => def.trackCompletion !== false && !steps?.find((step) => step.step_key === def.key)?.done,
   );
