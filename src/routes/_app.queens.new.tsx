@@ -21,12 +21,14 @@ export const Route = createFileRoute("/_app/queens/new")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({ mother: typeof s.mother === "string" ? s.mother : undefined }),
   component: NewQueenBatchPage,
 });
 
 function NewQueenBatchPage() {
   const navigate = useNavigate({ from: Route.fullPath });
-  const [name, setName] = useState("");
+  const { mother } = Route.useSearch();
+  const [name, setName] = useState(mother ? `Партія від: ${mother}` : "");
   const [method, setMethod] = useState<QueenMethod>("comb");
   const [date, setDate] = useState(todayLocal());
   const [count, setCount] = useState("");
@@ -48,6 +50,7 @@ function NewQueenBatchPage() {
         grafted_on: date,
         method,
         next_action: null,
+        mother_hive: mother ?? null,
         count: count ? Number(count) : null,
         larvae_count: count ? Number(count) : null,
         status: "planned",
@@ -84,6 +87,7 @@ function NewQueenBatchPage() {
 
       <Card className="p-4">
         <div className="space-y-4">
+          {mother && <div className="rounded-md bg-honey/20 p-3 text-sm">Материнська сім'я: <b>{mother}</b></div>}
           <div>
             <Label htmlFor="batch-name">Назва партії</Label>
             <Input id="batch-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Партія №1" />
