@@ -19,7 +19,9 @@ export function getOfflineState(): OfflineState {
 }
 export function subscribeOffline(fn: () => void) {
   listeners.add(fn);
-  return () => listeners.delete(fn);
+  return () => {
+    listeners.delete(fn);
+  };
 }
 function emit() {
   listeners.forEach((l) => l());
