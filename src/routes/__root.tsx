@@ -13,6 +13,9 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { OfflineBadge } from "@/components/offline-badge";
+import { installOfflineLayer } from "@/lib/offline";
+import { registerAppServiceWorker } from "@/lib/pwa-register";
 
 function NotFoundComponent() {
   return (
@@ -120,12 +123,19 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+// Patch fetch before any page requests data (not render-visible).
+if (typeof window !== "undefined") installOfflineLayer();
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    void registerAppServiceWorker();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <OfflineBadge />
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );
