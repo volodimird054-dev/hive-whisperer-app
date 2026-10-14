@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_app/queens/new")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  validateSearch: (s: Record<string, unknown>) => ({ mother: typeof s.mother === "string" ? s.mother : undefined }),
+  validateSearch: (s: Record<string, unknown>): { mother?: string } => ({ mother: typeof s.mother === "string" ? s.mother : undefined }),
   component: NewQueenBatchPage,
 });
 
