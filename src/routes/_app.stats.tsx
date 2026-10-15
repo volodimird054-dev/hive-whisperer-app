@@ -47,7 +47,7 @@ function StatsPage() {
       const yearStart = `${new Date().getFullYear()}-01-01`;
       const [points, hives, inspections] = await Promise.all([
         supabase.from("apiary_points").select("id, kind, name"),
-        supabase.from("hives").select("id, number, breed, queen_year, point_id").is("archived_at", null),
+        supabase.from("hives").select("id, number, breed, queen_year, point_id").is("archived_at", null).not("point_id", "is", null),
         supabase
           .from("inspections")
           .select("hive_id, inspected_at, queen_status, brood_level, honey_level, aggression, swarming")

@@ -15,7 +15,7 @@ export type PlanUsage = {
 export async function fetchPlanUsage(): Promise<PlanUsage> {
   const [pointsRes, hivesRes] = await Promise.all([
     (supabase.from as any)("apiary_points").select("id, kind"),
-    (supabase.from("hives") as any).select("id, point_id").is("archived_at", null),
+    (supabase.from("hives") as any).select("id, point_id").is("archived_at", null).not("point_id", "is", null),
   ]);
   const points = (pointsRes.data ?? []) as Array<{ id: string; kind: string }>;
   const hives = (hivesRes.data ?? []) as Array<{ point_id: string | null }>;
