@@ -331,18 +331,31 @@ export function nextActionOf(batch: { next_action?: string | null } | null | und
   return value === "cells" || value === "protectors" ? value : "undecided";
 }
 
-/** Завершена партія переходить до архіву через сім повних днів після останньої зміни або виконаного етапу. */
+/** Кінцева дата технічної карти: остання планова дата циклу або пізніша фактична відмітка етапу. */
+export function queenBatchFinalDate(
+  batch: { method?: string | null; next_action?: string | null; grafted_on?: string | null },
+  steps?: Array<{ done_on?: string | null }> | null,
+) {
+  if (!batch.grafted_on) return null;
+  const method = (batch.method === "transfer" ? "transfer" : "comb") as QueenMethod;
+  const nextAction = nextActionOf(batch);
+  if (nextAction === "undecided") return null;
+  const defs = buildStepDefs(method, nextAction);
+  const lastDay = Math.max(...defs.map((d) => d.dayTo ?? d.dayFrom));
+  const planned = addDays(batch.grafted_on, lastDay);
+  const done = (steps?.map((s) => s.done_on).filter(Boolean) as string[]).sort().at(-1);
+  return done && done > planned ? done : planned;
+}
+
+/** Партія переходить до архіву через 7 днів після кінцевої дати технічної карти. */
 export function shouldArchiveQueenBatch(
-  batch: { status?: string | null; updated_at?: string | null },
+  batch: { status?: string | null; method?: string | null; next_action?: string | null; grafted_on?: string | null },
   steps?: Array<{ done_on?: string | null }> | null,
   today = todayLocal(),
 ) {
-  if (batch.status !== "finished") return false;
-  const dates = [batch.updated_at?.slice(0, 10), ...(steps?.map((step) => step.done_on) ?? [])]
-    .filter((date): date is string => Boolean(date))
-    .sort();
-  const completedOn = dates.at(-1);
-  return completedOn ? daysBetween(completedOn, today) >= 7 : false;
+  if (batch.status === "cancelled") return false;
+  const finalDate = queenBatchFinalDate(batch, steps);
+  return finalDate ? daysBetween(finalDate, today) >= 7 : false;
 }
 
 export function automaticQueenStatus({

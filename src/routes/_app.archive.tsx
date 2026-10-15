@@ -148,31 +148,6 @@ function ArchivePage() {
       )}
       </section>
 
-      <section>
-        <h2 className="mb-4 text-xl font-bold">Архів партій маток</h2>
-        {!queenBatches?.length ? (
-          <Card className="p-8 text-center text-muted-foreground">Архів партій порожній.</Card>
-        ) : (
-          <div className="space-y-2">
-            {queenBatches.map((batch: any) => (
-              <Card key={batch.id} className="p-4">
-                <div className="font-medium">{batch.name}</div>
-                <div className="mt-1 text-xs text-muted-foreground">
-                  Початок {batch.grafted_on} · архівовано {new Date(batch.archived_at).toLocaleDateString("uk-UA")}
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <Button variant="outline" onClick={() => restoreQueenBatch(batch.id)}>
-                    <ArchiveRestore className="mr-2 h-4 w-4" /> Відновити
-                  </Button>
-                  <Button variant="destructive" onClick={() => deleteQueenBatch(batch.id, batch.name)}>
-                    <Trash2 className="mr-2 h-4 w-4" /> Видалити назавжди
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
 
       <AlertDialog open={!!confirmId} onOpenChange={(v) => !v && setConfirmId(null)}>
         <AlertDialogContent>
