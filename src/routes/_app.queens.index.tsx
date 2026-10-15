@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
-import { ArrowRight, CalendarDays, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowRight, CalendarDays, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   METHOD_LABEL,
@@ -94,6 +94,35 @@ function QueensPage() {
       return rows.filter((batch: any) => !expired.some((item: any) => item.id === batch.id));
     },
   });
+  const [tab, setTab] = useState<"active" | "archive">("active");
+  const { data: archived } = useQuery({
+    queryKey: ["archived-queen-batches"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("queen_batches")
+        .select("*")
+        .not("archived_at", "is", null)
+        .order("archived_at", { ascending: false });
+      return data ?? [];
+    },
+  });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["queens"] });
+    qc.invalidateQueries({ queryKey: ["archived-queen-batches"] });
+  };
+  async function restore(id: string) {
+    const { error } = await supabase.from("queen_batches").update({ archived_at: null }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Технічну карту відновлено");
+    refresh();
+  }
+  async function hardDelete(id: string, name: string) {
+    if (!confirm(`Видалити технічну карту «${name}» назавжди?`)) return;
+    const { error } = await supabase.from("queen_batches").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Видалено назавжди");
+    refresh();
+  }
   if (matchRoute({ to: "/queens/new" })) return null;
 
   return (
@@ -111,18 +140,46 @@ function QueensPage() {
       </section>
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Створені партії</p>
-            <h2 className="text-xl font-bold">Мої партії</h2>
-          </div>
-          <Badge variant="outline">{batches?.length ?? 0}</Badge>
+        <div className="mb-4 grid grid-cols-2 gap-2 rounded-lg bg-muted p-1">
+          <Button variant={tab === "active" ? "default" : "ghost"} onClick={() => setTab("active")}>
+            Мої партії ({batches?.length ?? 0})
+          </Button>
+          <Button variant={tab === "archive" ? "default" : "ghost"} onClick={() => setTab("archive")}>
+            <Archive className="mr-2 h-4 w-4" />Архів карт ({archived?.length ?? 0})
+          </Button>
         </div>
-        {!batches?.length ? (
-          <Card className="p-8 text-center text-muted-foreground">Створіть першу партію — технічна карта з датами, порадами та застереженнями сформується автоматично.</Card>
+        {tab === "active" ? (
+          !batches?.length ? (
+            <Card className="p-8 text-center text-muted-foreground">Створіть першу партію — технічна карта з датами, порадами та застереженнями сформується автоматично.</Card>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {batches.map((batch: any) => <BatchRow key={batch.id} batch={batch} onChange={refresh} />)}
+            </div>
+          )
+        ) : !archived?.length ? (
+          <Card className="p-8 text-center text-muted-foreground">Архів технічних карт порожній. Карти потрапляють сюди автоматично через 7 днів після кінцевої дати.</Card>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
-            {batches.map((batch: any) => <BatchRow key={batch.id} batch={batch} onChange={() => qc.invalidateQueries({ queryKey: ["queens"] })} />)}
+            {archived.map((batch: any) => {
+              const m: QueenMethod = (batch.method ?? "comb") as QueenMethod;
+              return (
+                <Card key={batch.id} className="overflow-hidden p-0">
+                  <div className={`h-1.5 ${(METHOD_STYLE[m] ?? METHODS[0]).accent}`} />
+                  <div className="p-4">
+                    <Link to="/queens/$batchId" params={{ batchId: batch.id }} className="flex items-center gap-2 font-semibold">
+                      <span className="truncate">{batch.name}</span><ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </Link>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {METHOD_LABEL[m]} · початок {batch.grafted_on} · в архіві з {new Date(batch.archived_at).toLocaleDateString("uk-UA")}
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <Button variant="outline" onClick={() => restore(batch.id)}><ArchiveRestore className="mr-2 h-4 w-4" />Відновити</Button>
+                      <Button variant="destructive" onClick={() => hardDelete(batch.id, batch.name)}><Trash2 className="mr-2 h-4 w-4" />Видалити</Button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         )}
       </section>
