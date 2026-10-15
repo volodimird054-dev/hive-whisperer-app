@@ -16,9 +16,9 @@ export const Route = createFileRoute("/_app/archive")({
   head: () => ({
     meta: [
       { title: "Архів — Пасічник" },
-      { name: "description", content: "Архів вуликів і завершених партій виведення маток." },
+      { name: "description", content: "Архів вуликів." },
       { property: "og:title", content: "Архів — Пасічник" },
-      { property: "og:description", content: "Архів вуликів і завершених партій виведення маток." },
+      { property: "og:description", content: "Архів вуликів." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
