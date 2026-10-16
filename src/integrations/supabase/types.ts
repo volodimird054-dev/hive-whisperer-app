@@ -898,6 +898,13 @@ export type Database = {
           id: string
         }[]
       }
+      get_profile_emails: {
+        Args: { _ids: string[] }
+        Returns: {
+          email: string
+          id: string
+        }[]
+      }
       is_apiary_member: {
         Args: { _apiary_id: string; _user_id: string }
         Returns: boolean
