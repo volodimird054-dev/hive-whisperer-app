@@ -8,7 +8,7 @@ export function usePointPhotoUrl(path: string | null | undefined): string | null
   useEffect(() => {
     let cancelled = false;
     if (!path) { setUrl(null); return; }
-    supabase.storage.from("point-photos").createSignedUrl(path, 3600).then(({ data }) => {
+    supabase.storage.from("point-photos").createSignedUrl(path, 120).then(({ data }) => {
       if (!cancelled) setUrl(data?.signedUrl ?? null);
     });
     return () => { cancelled = true; };

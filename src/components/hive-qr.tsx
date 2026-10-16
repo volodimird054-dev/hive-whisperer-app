@@ -122,9 +122,10 @@ export function HiveQrButton({
   async function print() {
     const composite = await renderLabelCanvas(qrUuid, number, label);
     const dataUrl = composite.toDataURL("image/png");
+    const esc = (v: unknown) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
     const w = window.open("", "_blank", "width=400,height=520");
     if (!w) return;
-    w.document.write(`<!doctype html><html><head><title>QR ${label} №${number}</title>
+    w.document.write(`<!doctype html><html><head><title>QR ${esc(label)} №${esc(number)}</title>
 <style>
   @page { size: auto; margin: 8mm; }
   body { font-family: system-ui, sans-serif; text-align: center; margin: 0; padding: 6mm; }
