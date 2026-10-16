@@ -7,6 +7,8 @@ import { QrCode, Printer, FileDown } from "lucide-react";
 
 const QR_PX = 720;
 const MODAL_QR_PX = 184;
+// Постійна адреса для всіх QR — не залежить від того, звідки відкрито додаток.
+const QR_ORIGIN = "https://hive-whisperer-app.lovable.app";
 
 // Малює QR + білий круг з номером посередині на canvas.
 // ВАЖЛИВО: qrUuid — постійний ідентифікатор вулика, який зберігається у БД
@@ -17,7 +19,7 @@ export async function renderHiveQrToCanvas(
   number: string | number,
   pixelSize = QR_PX,
 ) {
-  const url = `${window.location.origin}/h/${qrUuid}`;
+  const url = `${QR_ORIGIN}/h/${qrUuid}`;
 
   await QRCode.toCanvas(canvas, url, {
     width: pixelSize,
