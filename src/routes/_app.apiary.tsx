@@ -138,8 +138,10 @@ function TeamSection({ apiaryId, ownerId }: { apiaryId: string; ownerId: string 
       const map: Record<string, any> = {};
       if (ids.length) {
         const { data: prof } = await supabase.from("profiles")
-          .select("id, display_name, email, avatar_url").in("id", ids);
+          .select("id, display_name, avatar_url").in("id", ids);
         (prof ?? []).forEach((p: any) => { map[p.id] = p; });
+        const { data: em } = await (supabase.rpc as any)("get_profile_emails", { _ids: ids });
+        (em ?? []).forEach((e: any) => { map[e.id] = { ...(map[e.id] ?? {}), email: e.email }; });
       }
       return list.map((m: any) => ({ ...m, profile: map[m.user_id] }));
     },

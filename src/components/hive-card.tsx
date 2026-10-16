@@ -250,10 +250,13 @@ export function HiveCard({
       if (ids.length) {
         const { data: prof } = await supabase
           .from("profiles")
-          .select("id, display_name, email")
+          .select("id, display_name")
           .in("id", ids as any);
+        const { data: em } = await (supabase.rpc as any)("get_profile_emails", { _ids: ids });
+        const emails: Record<string, string> = {};
+        (em ?? []).forEach((e: any) => { emails[e.id] = e.email; });
         (prof ?? []).forEach((p: any) => {
-          authors[p.id] = { display_name: p.display_name, email: p.email };
+          authors[p.id] = { display_name: p.display_name, email: emails[p.id] ?? null };
         });
       }
       return list.map((i: any) => ({ ...i, author: authors[i.user_id] }));
