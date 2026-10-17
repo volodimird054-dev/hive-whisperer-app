@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Camera, X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -25,7 +25,11 @@ export async function uploadInspectionPhotos(hiveId: string, files: File[]): Pro
   for (const f of files) {
     const blob = await compress(f);
     const path = `${hiveId}/${crypto.randomUUID()}.jpg`;
-    const { error } = await supabase.storage.from(INSPECTION_BUCKET).upload(path, blob, { contentType: "image/jpeg" });
+    let { error } = await supabase.storage.from(INSPECTION_BUCKET).upload(path, blob, { contentType: "image/jpeg", upsert: true });
+    if (error) {
+      await new Promise((r) => setTimeout(r, 800));
+      ({ error } = await supabase.storage.from(INSPECTION_BUCKET).upload(path, blob, { contentType: "image/jpeg", upsert: true }));
+    }
     if (error) throw error;
     paths.push(path);
   }
@@ -34,6 +38,7 @@ export async function uploadInspectionPhotos(hiveId: string, files: File[]): Pro
 
 export function InspectionPhotoPicker({ files, onChange }: { files: File[]; onChange: (f: File[]) => void }) {
   const [previews, setPreviews] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     const urls = files.map((f) => URL.createObjectURL(f));
     setPreviews(urls);
@@ -55,22 +60,29 @@ export function InspectionPhotoPicker({ files, onChange }: { files: File[]; onCh
         </div>
       ))}
       {files.length < MAX_PHOTOS && (
-        <label className="w-20 h-20 rounded-lg border-2 border-dashed flex flex-col items-center justify-center text-xs text-muted-foreground cursor-pointer">
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="w-20 h-20 rounded-lg border-2 border-dashed flex flex-col items-center justify-center text-xs text-muted-foreground"
+        >
           <Camera className="w-5 h-5 mb-1" />
           Фото
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => {
-              const picked = Array.from(e.target.files ?? []);
-              onChange([...files, ...picked].slice(0, MAX_PHOTOS));
-              e.target.value = "";
-            }}
-          />
-        </label>
+        </button>
       )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden
+        onChange={(e) => {
+          const picked = Array.from(e.target.files ?? []);
+          if (picked.length) onChange([...files, ...picked].slice(0, MAX_PHOTOS));
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }
