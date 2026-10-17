@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Loader2, Trash2, Pencil, Plus, CalendarClock } from "lucide-react";
 import { HiveQrButton } from "@/components/hive-qr";
 import { VoiceTextarea } from "@/components/voice-textarea";
+import { InspectionPhotoGallery, InspectionPhotoPicker, uploadInspectionPhotos } from "@/components/inspection-photos";
 
 const AGGRESSION_OPTIONS = [
   { v: "very_calm", l: "Дуже спокійна" },
@@ -187,6 +188,10 @@ function InspectionForm({
         <Label className="mb-2 block">Примітка</Label>
         <VoiceTextarea rows={3} value={notes} onChange={setNotes} placeholder="Опишіть огляд або натисніть мікрофон." />
       </div>
+      <div>
+        <Label className="mb-2 block">Фото</Label>
+        <InspectionPhotoPicker files={photos} onChange={setPhotos} />
+      </div>
       <div className="grid grid-cols-2 gap-2">
         <Button variant="outline" onClick={onCancel}>Скасувати</Button>
         <Button onClick={save} disabled={saving}>
@@ -215,6 +220,7 @@ function InspectionRow({ i }: { i: any }) {
       {summary && <div className="mt-1">{summary}</div>}
       {!!worksList.length && <div className="text-xs mt-1">Роботи: {worksList.join(", ")}</div>}
       {i.notes && <div className="mt-1 italic">{i.notes}</div>}
+      {Array.isArray(i.photo_paths) && i.photo_paths.length > 0 && <InspectionPhotoGallery paths={i.photo_paths} />}
     </Card>
   );
 }
