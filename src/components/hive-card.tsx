@@ -78,6 +78,7 @@ function InspectionForm({
   const [swarming, setSwarming] = useState("");
   const [works, setWorks] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
 
   function toggleWork(v: string) {
@@ -87,6 +88,15 @@ function InspectionForm({
   async function save() {
     setSaving(true);
     const { data: u } = await supabase.auth.getUser();
+    let photo_paths: string[] | null = null;
+    if (photos.length) {
+      try {
+        photo_paths = await uploadInspectionPhotos(hiveId, photos);
+      } catch (e: any) {
+        setSaving(false);
+        return toast.error("Не вдалося завантажити фото. Перевірте зв'язок.");
+      }
+    }
     const { error } = await (supabase.from("inspections") as any).insert({
       user_id: u.user!.id,
       hive_id: hiveId,
@@ -97,6 +107,7 @@ function InspectionForm({
       swarming: swarming || null,
       works: works.length ? works : null,
       notes: notes || null,
+      photo_paths,
     });
     setSaving(false);
     if (error) return toast.error(error.message);
