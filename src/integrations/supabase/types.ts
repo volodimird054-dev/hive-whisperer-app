@@ -454,6 +454,7 @@ export type Database = {
           inspected_at: string
           mood: string | null
           notes: string | null
+          photo_paths: string[] | null
           queen_seen: boolean | null
           queen_status: string | null
           swarming: string | null
@@ -472,6 +473,7 @@ export type Database = {
           inspected_at?: string
           mood?: string | null
           notes?: string | null
+          photo_paths?: string[] | null
           queen_seen?: boolean | null
           queen_status?: string | null
           swarming?: string | null
@@ -490,6 +492,7 @@ export type Database = {
           inspected_at?: string
           mood?: string | null
           notes?: string | null
+          photo_paths?: string[] | null
           queen_seen?: boolean | null
           queen_status?: string | null
           swarming?: string | null
@@ -890,6 +893,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_hive: {
+        Args: { _hive_id: string; _user_id: string }
+        Returns: boolean
+      }
       find_user_by_email: {
         Args: { _email: string }
         Returns: {

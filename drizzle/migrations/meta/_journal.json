@@ -8,6 +8,13 @@
       "when": 1792132356979,
       "tag": "0000_secure_profiles_email",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792277524672,
+      "tag": "0001_inspection_photos",
+      "breakpoints": true
     }
   ]
 }
