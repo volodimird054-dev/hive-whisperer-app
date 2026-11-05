@@ -23,7 +23,7 @@ const SCREENS: Record<string, string> = {
 };
 
 // Шляхи, на яких ГОЛОСОВЕ керування ПРИХОВАНЕ
-const VOICE_HIDDEN = ["/", "/apiary", "/marketplace", "/chat", "/queens"];
+const VOICE_HIDDEN = ["/", "/apiary", "/marketplace", "/chat", "/queens", "/calendar", "/stats", "/archive", "/points"];
 
 export function VoiceFab() {
   const [open, setOpen] = useState(false);
