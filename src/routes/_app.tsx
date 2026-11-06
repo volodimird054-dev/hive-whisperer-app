@@ -26,11 +26,11 @@ function AppLayout() {
 
   return (
     <div className="min-h-dvh bg-background flex flex-col">
-      <header className="sticky top-0 z-30 bg-card border-b">
+      <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-semibold">
             <span className="text-2xl">🐝</span>
-            <span>Пасічник</span>
+            <span className="text-lg">Пасічник</span>
           </Link>
           <div className="flex items-center gap-1">
             <Link to="/">
