@@ -4,8 +4,8 @@
   "description": "Облік бджолосімей з голосовим керуванням",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#fbf6e8",
-  "theme_color": "#d18d2a",
+  "background_color": "#1c1712",
+  "theme_color": "#1c1712",
   "lang": "uk",
   "orientation": "portrait",
   "icons": [

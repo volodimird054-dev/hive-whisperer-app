@@ -19,16 +19,19 @@ function HomePage() {
   return (
     <div className="overflow-hidden">
       <div className="mb-6 mt-2">
-        <h1 className="text-xl font-bold sm:text-2xl">Вітаю, пасічнику! 🐝</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Натисніть мікрофон унизу — і керуйте додатком голосом.
+        <h1 className="text-2xl font-extrabold leading-tight sm:text-3xl">
+          Вітаю, пасічнику!<br />
+          <span className="text-honey-glow">Здорових бджіл 🐝</span>
+        </h1>
+        <p className="text-sm text-muted-foreground mt-2">
+          Догляд. Розвиток. Врожай.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {ITEMS.map(({ to, title, desc, icon: Icon, tone }) => (
+      <div className="grid grid-cols-2 gap-3">
+        {ITEMS.map(({ to, title, desc, icon: Icon, tone }, i) => (
           <Link key={to} to={to} className="block min-w-0">
-            <Card className={`main-menu-card ${tone}`}>
+            <Card className={`main-menu-card ${tone} ${i === 0 ? "main-menu-card--accent" : ""}`}>
               <Icon className="main-menu-card__icon" />
               <div className="main-menu-card__title">{title}</div>
               <div className="main-menu-card__desc">{desc}</div>

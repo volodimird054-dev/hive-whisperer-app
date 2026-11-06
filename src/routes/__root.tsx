@@ -84,7 +84,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Пасічник — облік бджолородин" },
       { name: "description", content: "Облік бджолосімей з голосовим керуванням" },
-      { name: "theme-color", content: "#d18d2a" },
+      { name: "theme-color", content: "#1c1712" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "Пасічник" },
       { property: "og:title", content: "Пасічник — облік бджолородин" },
