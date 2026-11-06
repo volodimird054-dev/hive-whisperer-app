@@ -1,44 +1,73 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Card } from "@/components/ui/card";
-import { Home as HomeIcon, Boxes, Crown, CalendarDays, BarChart3, Archive } from "lucide-react";
+import { Home as HomeIcon, Boxes, Crown, CalendarDays, BarChart3, Archive, ChevronRight } from "lucide-react";
+import heroBee from "@/assets/hero-bee.jpg";
 
 export const Route = createFileRoute("/_app/")({
   component: HomePage,
 });
 
-const ITEMS = [
-  { to: "/apiary", title: "Моя пасіка", desc: "Профіль вашої пасіки", icon: HomeIcon, tone: "main-menu-card--apiary" },
-  { to: "/points", title: "Мої точки", desc: "Вулики та нуклеуси", icon: Boxes, tone: "main-menu-card--hives" },
-  { to: "/queens", title: "Виведення маток", desc: "Графік щеплень і виходу", icon: Crown, tone: "main-menu-card--queens" },
-  { to: "/calendar", title: "Календар пасічника", desc: "Сезонні роботи", icon: CalendarDays, tone: "main-menu-card--calendar" },
-  { to: "/stats", title: "Статистика", desc: "Аналітика пасіки", icon: BarChart3, tone: "main-menu-card--queens" },
-  { to: "/archive", title: "Архів", desc: "Архівовані вулики", icon: Archive, tone: "main-menu-card--apiary" },
+const QUICK = [
+  { to: "/apiary", title: "Пасіка", icon: HomeIcon },
+  { to: "/points", title: "Точки", icon: Boxes },
+  { to: "/queens", title: "Матки", icon: Crown },
+  { to: "/calendar", title: "Календар", icon: CalendarDays },
+] as const;
+
+const WIDE = [
+  { to: "/stats", title: "Статистика", desc: "Топ-5 сімей і антирейтинг", icon: BarChart3 },
+  { to: "/archive", title: "Архів", desc: "Архівовані вулики", icon: Archive },
 ] as const;
 
 function HomePage() {
   return (
-    <div className="overflow-hidden">
-      <div className="mb-6 mt-2">
-        <h1 className="text-2xl font-extrabold leading-tight sm:text-3xl">
-          Вітаю, пасічнику!<br />
-          <span className="text-honey-glow">Здорових бджіл 🐝</span>
-        </h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          Догляд. Розвиток. Врожай.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <section className="relative -mx-4 -mt-4 overflow-hidden px-4 pb-6 pt-6">
+        <img
+          src={heroBee}
+          alt=""
+          width={1024}
+          height={1024}
+          className="pointer-events-none absolute -right-16 top-0 h-full w-auto max-w-none object-cover opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent" />
+        <div className="relative max-w-[62%]">
+          <h1 className="text-[1.7rem] font-extrabold leading-tight">
+            Здорові бджоли —
+            <br />
+            <span className="text-honey-glow">сильніше завтра</span>
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">Догляд. Розвиток. Врожай.</p>
+        </div>
+      </section>
 
-      <div className="grid grid-cols-2 gap-3">
-        {ITEMS.map(({ to, title, desc, icon: Icon, tone }, i) => (
-          <Link key={to} to={to} className="block min-w-0">
-            <Card className={`main-menu-card ${tone} ${i === 0 ? "main-menu-card--accent" : ""}`}>
-              <Icon className="main-menu-card__icon" />
-              <div className="main-menu-card__title">{title}</div>
-              <div className="main-menu-card__desc">{desc}</div>
-            </Card>
+      <div className="grid grid-cols-4 gap-2">
+        {QUICK.map(({ to, title, icon: Icon }) => (
+          <Link key={to} to={to} className="bee-tile flex flex-col items-center gap-2 px-1 py-3 text-center">
+            <Icon className="h-7 w-7 text-honey drop-shadow-[0_0_8px_var(--honey)]" />
+            <span className="text-xs font-medium leading-tight">{title}</span>
           </Link>
         ))}
       </div>
+
+      {WIDE.map(({ to, title, desc, icon: Icon }) => (
+        <Link key={to} to={to} className="bee-tile bee-tile--striped flex items-center gap-4 p-4">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-honey text-honey-foreground">
+            <Icon className="h-6 w-6" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-bold">{title}</span>
+            <span className="block text-xs text-muted-foreground">{desc}</span>
+          </span>
+          <ChevronRight className="h-5 w-5 text-honey" />
+        </Link>
+      ))}
+
+      <Link to="/points" className="hero-honey flex items-center gap-3 rounded-2xl p-4 font-bold shadow-[0_0_28px_-6px_var(--honey)]">
+        <span className="text-2xl">🐝</span>
+        <span className="flex-1 leading-tight">Кращі пасічники створюють кращий світ</span>
+        <ChevronRight className="h-5 w-5" />
+      </Link>
     </div>
   );
 }
