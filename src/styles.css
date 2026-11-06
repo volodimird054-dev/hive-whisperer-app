@@ -195,6 +195,25 @@
     box-shadow: var(--glow-honey);
   }
 
+  .bee-tile {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid var(--border);
+    background: linear-gradient(160deg, var(--card), var(--background));
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+  .bee-tile:active { transform: scale(0.97); }
+  .bee-tile:hover { border-color: var(--honey); box-shadow: var(--glow-honey); }
+  .bee-tile--striped { padding-right: 1.75rem; }
+  .bee-tile--striped::after {
+    content: "";
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 10px;
+    background: var(--bee-stripes);
+  }
+
   .hero-honey {
     background: var(--gradient-honey);
     color: var(--primary-foreground);
