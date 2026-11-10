@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Home as HomeIcon, Boxes, Crown, CalendarDays, BarChart3, Archive, ChevronRight } from "lucide-react";
+import { Boxes, Crown, CalendarDays, Archive, ChevronRight } from "lucide-react";
+import { HomeWeather } from "@/components/home-weather";
 import heroBee from "@/assets/hero-bee.jpg";
 
 export const Route = createFileRoute("/_app/")({
@@ -7,15 +8,10 @@ export const Route = createFileRoute("/_app/")({
 });
 
 const QUICK = [
-  { to: "/apiary", title: "Пасіка", icon: HomeIcon },
   { to: "/points", title: "Точки", icon: Boxes },
   { to: "/queens", title: "Матки", icon: Crown },
   { to: "/calendar", title: "Календар", icon: CalendarDays },
-] as const;
-
-const WIDE = [
-  { to: "/stats", title: "Статистика", desc: "Топ-5 сімей і антирейтинг", icon: BarChart3 },
-  { to: "/archive", title: "Архів", desc: "Архівовані вулики", icon: Archive },
+  { to: "/archive", title: "Архів", icon: Archive },
 ] as const;
 
 function HomePage() {
@@ -50,18 +46,7 @@ function HomePage() {
         ))}
       </div>
 
-      {WIDE.map(({ to, title, desc, icon: Icon }) => (
-        <Link key={to} to={to} className="bee-tile bee-tile--striped flex items-center gap-4 p-4">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-honey text-honey-foreground">
-            <Icon className="h-6 w-6" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-bold">{title}</span>
-            <span className="block text-xs text-muted-foreground">{desc}</span>
-          </span>
-          <ChevronRight className="h-5 w-5 text-honey" />
-        </Link>
-      ))}
+      <HomeWeather />
 
       <Link to="/points" className="hero-honey flex items-center gap-3 rounded-2xl p-4 font-bold shadow-[0_0_28px_-6px_var(--honey)]">
         <span className="text-2xl">🐝</span>

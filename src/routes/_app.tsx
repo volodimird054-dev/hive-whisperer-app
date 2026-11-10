@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { LogOut, Home, Boxes, Plus, BarChart3, CalendarDays } from "lucide-react";
+import { LogOut, Home, Boxes, Plus, BarChart3, User } from "lucide-react";
 import { VoiceFab } from "@/components/voice-fab";
 
 export const Route = createFileRoute("/_app")({
@@ -60,7 +60,7 @@ function AppLayout() {
           </Link>
           {[
             { to: "/stats", label: "Статистика", icon: BarChart3 },
-            { to: "/calendar", label: "Календар", icon: CalendarDays },
+            { to: "/apiary", label: "Профіль", icon: User },
           ].map(({ to, label, icon: Icon }) => (
             <Link key={to} to={to} className="flex flex-col items-center gap-1 text-muted-foreground" activeProps={{ className: "!text-honey" }}>
               <Icon className="h-5 w-5" />{label}
