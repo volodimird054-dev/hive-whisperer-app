@@ -151,7 +151,7 @@ export function VoiceFab() {
         <Button
           size="icon"
           variant="default"
-          className="fixed bottom-6 left-6 z-40 rounded-full h-16 w-16 shadow-lg"
+          className="fixed bottom-24 left-6 z-40 rounded-full h-16 w-16 shadow-lg"
           onClick={() => setScanOpen(true)}
           aria-label="Сканувати QR"
         >
@@ -161,7 +161,7 @@ export function VoiceFab() {
       {showVoice && (
         <Button
           size="icon"
-          className="fixed bottom-6 right-6 z-40 rounded-full h-16 w-16 shadow-lg"
+          className="fixed bottom-24 right-6 z-40 rounded-full h-16 w-16 shadow-lg"
           onClick={() => { setOpen(true); setTimeout(begin, 100); }}
           aria-label="Голосова команда"
         >

@@ -27,10 +27,10 @@ function HomePage() {
           alt=""
           width={1024}
           height={1024}
-          className="pointer-events-none absolute -right-16 top-0 h-full w-auto max-w-none object-cover opacity-90"
+          className="pointer-events-none absolute right-0 top-0 h-full w-[75%] object-cover opacity-90"
+          style={{ maskImage: "linear-gradient(to right, transparent, black 55%)", WebkitMaskImage: "linear-gradient(to right, transparent, black 55%)" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent" />
         <div className="relative max-w-[62%]">
           <h1 className="text-[1.7rem] font-extrabold leading-tight">
             Здорові бджоли —

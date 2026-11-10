@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { LogOut, Home } from "lucide-react";
+import { LogOut, Home, Boxes, Plus, BarChart3, CalendarDays } from "lucide-react";
 import { VoiceFab } from "@/components/voice-fab";
 
 export const Route = createFileRoute("/_app")({
@@ -42,9 +42,32 @@ function AppLayout() {
           </div>
         </div>
       </header>
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 pb-28">
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-4 pb-36">
         <Outlet />
       </main>
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/90 backdrop-blur pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto grid h-16 max-w-3xl grid-cols-5 items-center text-[11px]">
+          {[
+            { to: "/", label: "Головна", icon: Home },
+            { to: "/points", label: "Точки", icon: Boxes },
+          ].map(({ to, label, icon: Icon }) => (
+            <Link key={to} to={to} activeOptions={{ exact: to === "/" }} className="flex flex-col items-center gap-1 text-muted-foreground" activeProps={{ className: "!text-honey" }}>
+              <Icon className="h-5 w-5" />{label}
+            </Link>
+          ))}
+          <Link to="/points" aria-label="Додати" className="mx-auto -mt-6 grid h-14 w-14 place-items-center bg-honey text-honey-foreground shadow-[0_0_24px_-4px_var(--honey)] [clip-path:polygon(25%_5%,75%_5%,100%_50%,75%_95%,25%_95%,0_50%)]">
+            <Plus className="h-7 w-7" />
+          </Link>
+          {[
+            { to: "/stats", label: "Статистика", icon: BarChart3 },
+            { to: "/calendar", label: "Календар", icon: CalendarDays },
+          ].map(({ to, label, icon: Icon }) => (
+            <Link key={to} to={to} className="flex flex-col items-center gap-1 text-muted-foreground" activeProps={{ className: "!text-honey" }}>
+              <Icon className="h-5 w-5" />{label}
+            </Link>
+          ))}
+        </div>
+      </nav>
       <VoiceFab />
     </div>
   );
