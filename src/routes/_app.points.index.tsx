@@ -14,6 +14,7 @@ import { Plus, Loader2, MapPin, Boxes, Egg, Crosshair } from "lucide-react";
 import { PointPhoto } from "@/components/point-photo";
 
 export const Route = createFileRoute("/_app/points/")({
+  validateSearch: (s: Record<string, unknown>): { new?: boolean } => (s.new ? { new: true } : {}),
   component: PointsPage,
 });
 
@@ -61,7 +62,8 @@ function PointsPage() {
     },
   });
 
-  const [open, setOpen] = useState(false);
+  const search = Route.useSearch();
+  const [open, setOpen] = useState(!!search.new);
   const [name, setName] = useState("");
   const [kind, setKind] = useState<"hives" | "nuclei">("hives");
   const [address, setAddress] = useState("");

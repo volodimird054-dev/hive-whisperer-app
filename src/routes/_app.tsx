@@ -1,9 +1,10 @@
 import { createFileRoute, Outlet, Link, useRouter, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { LogOut, Home, Boxes, Plus, BarChart3, User } from "lucide-react";
+import { LogOut, Home, Boxes, Plus, BarChart3, User, ClipboardList, Crown, CalendarPlus, MapPinPlus } from "lucide-react";
 import { VoiceFab } from "@/components/voice-fab";
 
 export const Route = createFileRoute("/_app")({
@@ -14,6 +15,7 @@ function AppLayout() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const navigate = useNavigate();
+  const [quick, setQuick] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -55,9 +57,9 @@ function AppLayout() {
               <Icon className="h-5 w-5" />{label}
             </Link>
           ))}
-          <Link to="/points" aria-label="Додати" className="mx-auto -mt-6 grid h-14 w-14 place-items-center bg-honey text-honey-foreground shadow-[0_0_24px_-4px_var(--honey)] [clip-path:polygon(25%_5%,75%_5%,100%_50%,75%_95%,25%_95%,0_50%)]">
+          <button type="button" onClick={() => setQuick(true)} aria-label="Додати" className="mx-auto -mt-6 grid h-14 w-14 place-items-center bg-honey text-honey-foreground shadow-[0_0_24px_-4px_var(--honey)] [clip-path:polygon(25%_5%,75%_5%,100%_50%,75%_95%,25%_95%,0_50%)]">
             <Plus className="h-7 w-7" />
-          </Link>
+          </button>
           {[
             { to: "/stats", label: "Статистика", icon: BarChart3 },
             { to: "/apiary", label: "Профіль", icon: User },
@@ -68,6 +70,23 @@ function AppLayout() {
           ))}
         </div>
       </nav>
+      <Sheet open={quick} onOpenChange={setQuick}>
+        <SheetContent side="bottom" className="rounded-t-2xl pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+          <SheetHeader><SheetTitle>Швидкі дії</SheetTitle></SheetHeader>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {([
+              { label: "Новий огляд", icon: ClipboardList, go: () => navigate({ to: "/points" }) },
+              { label: "Нова партія маток", icon: Crown, go: () => navigate({ to: "/queens/new" }) },
+              { label: "Подія в календарі", icon: CalendarPlus, go: () => navigate({ to: "/calendar" }) },
+              { label: "Новий точок", icon: MapPinPlus, go: () => navigate({ to: "/points", search: { new: true } }) },
+            ] as const).map(({ label, icon: Icon, go }) => (
+              <button key={label} type="button" onClick={() => { setQuick(false); go(); }} className="bee-tile flex flex-col items-center gap-2 rounded-xl border p-4 text-sm font-medium">
+                <Icon className="h-6 w-6 text-honey" />{label}
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
       <VoiceFab />
     </div>
   );
