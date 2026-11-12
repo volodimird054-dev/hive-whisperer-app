@@ -29,11 +29,11 @@ function HomePage() {
                 <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent" />
         <div className="relative max-w-[62%]">
           <h1 className="text-[1.7rem] font-extrabold leading-tight">
-            Здорові бджоли —
+            Твоя пасіка в кишені —
             <br />
-            <span className="text-honey-glow">сильніше завтра</span>
+            <span className="text-honey-glow">без зайвого паперу</span>
           </h1>
-          <p className="mt-3 text-sm text-muted-foreground">Догляд. Розвиток. Врожай.</p>
+          <p className="mt-3 text-sm text-muted-foreground">Швидкий огляд. Точна історія. Впевнений результат.</p>
         </div>
       </section>
 
