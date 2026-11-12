@@ -920,6 +920,7 @@ export type Database = {
         Args: { _apiary_id: string; _user_id: string }
         Returns: boolean
       }
+      shares_apiary: { Args: { _a: string; _b: string }; Returns: boolean }
     }
     Enums: {
       apiary_role: "owner" | "member"

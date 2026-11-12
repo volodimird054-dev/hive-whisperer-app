@@ -15,6 +15,13 @@
       "when": 1792277524672,
       "tag": "0001_inspection_photos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794492370437,
+      "tag": "0002_migration",
+      "breakpoints": true
     }
   ]
 }
