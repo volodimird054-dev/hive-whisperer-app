@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Droplets, Wind, Flower2, MapPin } from "lucide-react";
+import { ChevronDown, ChevronRight, Droplets, Wind, Flower2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchWeather, geocodeAddress, weatherCodeInfo, rateCurrent } from "@/lib/weather";
+import { fetchWeather, geocodeAddress, weatherCodeInfo, rateCurrent, dayOfWeekShort } from "@/lib/weather";
 
 type Pt = { id: string; name: string; lat: number | null; lng: number | null; address: string | null; location: string | null };
 
@@ -15,6 +15,7 @@ const RATING_TEXT = {
 
 export function HomeWeather() {
   const [idx, setIdx] = useState(0);
+  const [open, setOpen] = useState(false);
   const { data: points = [] } = useQuery({
     queryKey: ["home-weather-points"],
     queryFn: async () => {
@@ -49,6 +50,7 @@ export function HomeWeather() {
   const r = cur ? RATING_TEXT[rateCurrent(cur, w!.daily[0]?.precipitation_sum ?? 0)] : null;
 
   return (
+    <div className="space-y-2">
     <button
       type="button"
       onClick={() => setIdx((i) => i + 1)}
@@ -84,5 +86,34 @@ export function HomeWeather() {
         </div>
       )}
     </button>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="bee-tile flex w-full items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-honey"
+        aria-expanded={open}
+      >
+        Прогноз на 7 днів
+        <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="bee-tile divide-y divide-border p-2">
+          {(w?.daily ?? []).slice(0, 7).map((d, i) => {
+            const di = weatherCodeInfo(d.weather_code);
+            return (
+              <div key={d.date} className="flex items-center gap-3 px-2 py-2 text-sm">
+                <span className="w-16 text-muted-foreground">
+                  {i === 0 ? "Сьогодні" : `${dayOfWeekShort(d.date)} ${d.date.slice(8, 10)}.${d.date.slice(5, 7)}`}
+                </span>
+                <span className="text-lg">{di.emoji}</span>
+                <span className="flex-1 truncate text-xs text-muted-foreground">{di.label}</span>
+                <span className="flex items-center gap-0.5 text-xs text-muted-foreground"><Droplets className="h-3 w-3 text-honey" />{Math.round(d.precipitation_probability_max)}%</span>
+                <span className="w-16 text-right font-semibold">{Math.round(d.tmax)}° <span className="text-muted-foreground">{Math.round(d.tmin)}°</span></span>
+              </div>
+            );
+          })}
+          {!w?.daily?.length && <p className="p-2 text-xs text-muted-foreground">Немає даних прогнозу</p>}
+        </div>
+      )}
+    </div>
   );
 }
