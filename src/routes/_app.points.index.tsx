@@ -11,10 +11,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Plus, Loader2, MapPin, Boxes, Egg, Crosshair } from "lucide-react";
+import { getPointLocation, parsePointCoordinates } from "@/lib/point-location";
 import { PointPhoto } from "@/components/point-photo";
 
 export const Route = createFileRoute("/_app/points/")({
   validateSearch: (s: Record<string, unknown>): { new?: boolean } => (s.new ? { new: true } : {}),
+  head: () => ({ meta: [
+    { title: "Мої точки — БіСвіт" },
+    { name: "description", content: "Точки пасіки, вулики, нуклеуси та GPS-координати." },
+    { property: "og:title", content: "Мої точки — БіСвіт" },
+    { property: "og:description", content: "Розташування та облік точків пасіки." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: PointsPage,
 });
 
@@ -73,35 +82,18 @@ function PointsPage() {
   const [saving, setSaving] = useState(false);
   const [gpsBusy, setGpsBusy] = useState(false);
 
-  function useMyLocation() {
-    if (!navigator.geolocation) {
-      toast.error("Браузер не підтримує геолокацію");
-      return;
-    }
-    if (!window.isSecureContext) {
-      toast.error("Геолокація доступна лише через HTTPS");
-      return;
-    }
+  async function useMyLocation() {
     setGpsBusy(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLat(pos.coords.latitude.toFixed(6));
-        setLng(pos.coords.longitude.toFixed(6));
-        setGpsBusy(false);
-        toast.success("Координати визначено");
-      },
-      (err) => {
-        setGpsBusy(false);
-        toast.error(
-          err.code === err.PERMISSION_DENIED
-            ? "Доступ до геолокації заборонено. Дозвольте його в браузері або введіть координати вручну."
-            : err.code === err.POSITION_UNAVAILABLE
-              ? "Не вдалося визначити позицію. Увімкніть GPS і спробуйте ще раз."
-              : "Час очікування вичерпано. Спробуйте ще раз.",
-        );
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
-    );
+    try {
+      const coords = await getPointLocation();
+      setLat(String(coords.lat));
+      setLng(String(coords.lng));
+      toast.success("Координати визначено");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Не вдалося визначити координати", { duration: 10000 });
+    } finally {
+      setGpsBusy(false);
+    }
   }
 
 
@@ -110,8 +102,11 @@ function PointsPage() {
       toast.error("Спочатку створіть пасіку у розділі «Моя пасіка»");
       return;
     }
+    let coords;
+    try { coords = parsePointCoordinates(lat, lng); }
+    catch (error) { return toast.error(error instanceof Error ? error.message : "Перевірте координати"); }
     const hasAddress = !!address.trim();
-    const hasGps = !!lat && !!lng;
+    const hasGps = coords.lat != null && coords.lng != null;
     if (!hasAddress && !hasGps) {
       toast.error("Вкажіть адресу або GPS координати");
       return;
@@ -122,9 +117,9 @@ function PointsPage() {
       name,
       kind,
       address: address || null,
-      lat: lat ? Number(lat) : null,
-      lng: lng ? Number(lng) : null,
-      location: address || (hasGps ? `${lat},${lng}` : null),
+      lat: coords.lat,
+      lng: coords.lng,
+      location: address || (hasGps ? `${coords.lat},${coords.lng}` : null),
       notes: notes || null,
     });
     setSaving(false);
@@ -168,8 +163,8 @@ function PointsPage() {
               <div>
                 <Label>GPS координати</Label>
                 <div className="flex gap-2">
-                  <Input value={lat} onChange={e => setLat(e.target.value)} placeholder="49.123456" />
-                  <Input value={lng} onChange={e => setLng(e.target.value)} placeholder="24.123456" />
+                  <Input aria-label="Широта" inputMode="decimal" value={lat} onChange={e => setLat(e.target.value)} placeholder="49.123456" />
+                  <Input aria-label="Довгота" inputMode="decimal" value={lng} onChange={e => setLng(e.target.value)} placeholder="24.123456" />
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={useMyLocation} disabled={gpsBusy} className="mt-2 w-full">
                   {gpsBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Crosshair className="w-4 h-4 mr-2" />}
@@ -177,7 +172,7 @@ function PointsPage() {
                 </Button>
               </div>
               <div><Label>Нотатки</Label><Textarea rows={3} value={notes} onChange={e => setNotes(e.target.value)} /></div>
-              <Button onClick={add} disabled={!name || saving} className="w-full">
+              <Button onClick={add} disabled={!name || saving || gpsBusy} className="w-full">
                 {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Створити
               </Button>
               <p className="text-xs text-muted-foreground text-center">Додаткові поля (фото, кочівля, погода) — у налаштуваннях точка після створення.</p>
@@ -192,7 +187,7 @@ function PointsPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           {points.map(p => {
             const Icon = p.kind === "nuclei" ? Egg : Boxes;
-            const loc = p.address || (p.lat && p.lng ? `${p.lat?.toFixed?.(5) ?? p.lat}, ${p.lng?.toFixed?.(5) ?? p.lng}` : null);
+            const loc = p.address || (p.lat != null && p.lng != null ? `${p.lat?.toFixed?.(5) ?? p.lat}, ${p.lng?.toFixed?.(5) ?? p.lng}` : null);
             return (
               <Link key={p.id} to="/points/$pointId" params={{ pointId: p.id }}>
                 <Card className="p-4 hover:bg-accent/40 cursor-pointer h-full">

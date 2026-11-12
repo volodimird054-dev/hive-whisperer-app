@@ -9,6 +9,7 @@ import { Loader2, Crosshair, Upload, ImageOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getPointLocation, parsePointCoordinates } from "@/lib/point-location";
 import { usePointPhotoUrl } from "./point-photo";
 
 type Point = {
@@ -45,42 +46,30 @@ type Props = {
 
 export function PointEditDialog({ open, onOpenChange, point, onSaved }: Props) {
   const [f, setF] = useState<Point>(point);
+  const [lat, setLat] = useState(String(point.lat ?? ""));
+  const [lng, setLng] = useState(String(point.lng ?? ""));
   const [saving, setSaving] = useState(false);
   const [gpsBusy, setGpsBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const photoUrl = usePointPhotoUrl(f.photo_path);
 
-  useEffect(() => { setF(point); }, [point, open]);
+  useEffect(() => { setF(point); setLat(String(point.lat ?? "")); setLng(String(point.lng ?? "")); }, [point, open]);
 
   function up<K extends keyof Point>(k: K, v: Point[K]) { setF(prev => ({ ...prev, [k]: v })); }
 
-  function useMyLocation() {
-    if (!navigator.geolocation) return toast.error("Браузер не підтримує геолокацію");
-    if (!window.isSecureContext) return toast.error("Геолокація доступна лише через HTTPS");
+  async function useMyLocation() {
     setGpsBusy(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setF(prev => ({
-          ...prev,
-          lat: Number(pos.coords.latitude.toFixed(6)),
-          lng: Number(pos.coords.longitude.toFixed(6)),
-        }));
-        setGpsBusy(false);
-        toast.success("Координати визначено — натисніть «Зберегти»");
-      },
-      (err) => {
-        setGpsBusy(false);
-        toast.error(
-          err.code === err.PERMISSION_DENIED
-            ? "Доступ до геолокації заборонено. Дозвольте його в налаштуваннях браузера або відкрийте додаток у окремій вкладці, або введіть координати вручну."
-            : err.code === err.POSITION_UNAVAILABLE
-              ? "Не вдалося визначити позицію. Увімкніть GPS і спробуйте ще раз."
-              : "Час очікування вичерпано. Спробуйте ще раз.",
-        );
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
-    );
+    try {
+      const coords = await getPointLocation();
+      setLat(String(coords.lat));
+      setLng(String(coords.lng));
+      toast.success("Координати визначено — натисніть «Зберегти»");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Не вдалося визначити координати", { duration: 10000 });
+    } finally {
+      setGpsBusy(false);
+    }
   }
 
 
@@ -116,13 +105,16 @@ export function PointEditDialog({ open, onOpenChange, point, onSaved }: Props) {
 
   async function save() {
     if (!f.name.trim()) return toast.error("Вкажіть назву");
+    let coords;
+    try { coords = parsePointCoordinates(lat, lng); }
+    catch (error) { return toast.error(error instanceof Error ? error.message : "Перевірте координати"); }
     setSaving(true);
     const payload = {
       name: f.name,
       kind: f.kind,
       address: f.address || null,
-      lat: f.lat ?? null,
-      lng: f.lng ?? null,
+      lat: coords.lat,
+      lng: coords.lng,
       notes: f.notes || null,
       stationary: f.stationary ?? true,
       description: f.description || null,
@@ -138,7 +130,7 @@ export function PointEditDialog({ open, onOpenChange, point, onSaved }: Props) {
       installed_at: f.installed_at || null,
       removed_at: f.removed_at || null,
       status: f.status || "active",
-      location: f.address || (f.lat && f.lng ? `${f.lat},${f.lng}` : null),
+      location: f.address || (coords.lat != null && coords.lng != null ? `${coords.lat},${coords.lng}` : null),
     };
     const { error } = await (supabase.from as any)("apiary_points").update(payload).eq("id", point.id);
     setSaving(false);
@@ -211,8 +203,8 @@ export function PointEditDialog({ open, onOpenChange, point, onSaved }: Props) {
               <div>
                 <Label>GPS координати</Label>
                 <div className="flex gap-2">
-                  <Input type="number" step="any" value={f.lat ?? ""} onChange={e => up("lat", e.target.value ? Number(e.target.value) : null)} placeholder="49.123456" />
-                  <Input type="number" step="any" value={f.lng ?? ""} onChange={e => up("lng", e.target.value ? Number(e.target.value) : null)} placeholder="24.123456" />
+                  <Input aria-label="Широта" inputMode="decimal" value={lat} onChange={e => setLat(e.target.value)} placeholder="49.123456" />
+                  <Input aria-label="Довгота" inputMode="decimal" value={lng} onChange={e => setLng(e.target.value)} placeholder="24.123456" />
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={useMyLocation} disabled={gpsBusy} className="mt-2 w-full">
                   {gpsBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Crosshair className="w-4 h-4 mr-2" />}
@@ -243,7 +235,7 @@ export function PointEditDialog({ open, onOpenChange, point, onSaved }: Props) {
             </div>
           </div>
 
-          <Button onClick={save} disabled={saving} className="w-full">
+          <Button onClick={save} disabled={saving || gpsBusy} className="w-full">
             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}Зберегти
           </Button>
         </div>
